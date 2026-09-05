@@ -1,0 +1,79 @@
+"""Shared tensor utilities for checkpoint-backed nucleotide models."""
+
+from __future__ import annotations
+
+from collections.abc import Sequence
+from pathlib import Path
+
+import numpy as np
+import torch
+from torch import nn
+from torch.nn import functional as functional
+
+
+CHECKPOINT_DIR = Path(__file__).resolve().parents[1] / "checkpoints"
+
+
+def encode_acgt_sequences(
+    sequences: Sequence[str] | np.ndarray,
+    *,
+    exact_length: int | None = None,
+    padded_length: int | None = None,
+) -> torch.Tensor:
+    """One-hot encode A/C/G/T strings; N padding becomes an all-zero vector."""
+    values = np.asarray(sequences, dtype=str).reshape(-1)
+    lengths = np.char.str_len(values)
+    if exact_length is not None and np.any(lengths != exact_length):
+        row = int(np.flatnonzero(lengths != exact_length)[0])
+        raise ValueError(
+            f"model requires {exact_length}-nt sequences; row {row} has "
+            f"length {int(lengths[row])}"
+        )
+    output_length = padded_length or exact_length
+    if output_length is None:
+        output_length = int(lengths.max(initial=0))
+    if np.any(lengths > output_length):
+        row = int(np.flatnonzero(lengths > output_length)[0])
+        raise ValueError(
+            f"row {row} has length {int(lengths[row])}, exceeding {output_length}"
+        )
+    encoded = np.zeros((len(values), 4, output_length), dtype=np.float32)
+    lookup = {base: channel for channel, base in enumerate("ACGT")}
+    for row, sequence in enumerate(values):
+        for position, base in enumerate(sequence):
+            if base == "N":
+                continue
+            if base not in lookup:
+                raise ValueError(
+                    f"invalid nucleotide at row {row}, position {position}: {base!r}"
+                )
+            encoded[row, lookup[base], position] = 1.0
+    return torch.from_numpy(encoded)
+
+
+def channels_first_with_padding(probabilities, padded_length: int):
+    """Convert canonical ``[batch, length, 4]`` soft input and right-pad it."""
+    if probabilities.ndim != 3 or probabilities.shape[-1] != 4:
+        raise ValueError("soft nucleotide input must have shape [batch, length, 4]")
+    if probabilities.shape[1] > padded_length:
+        raise ValueError(f"model accepts at most {padded_length} nucleotides")
+    channels_first = probabilities.transpose(1, 2)
+    return functional.pad(
+        channels_first,
+        (0, padded_length - probabilities.shape[1]),
+    )
+
+
+class RestoredTargetScale(nn.Module):
+    """Restore standardized model predictions to their measured target scale."""
+
+    def __init__(self, model: nn.Module, mean, scale) -> None:
+        super().__init__()
+        self.model = model
+        self.register_buffer("target_mean", torch.as_tensor(mean, dtype=torch.float32))
+        self.register_buffer(
+            "target_scale", torch.as_tensor(scale, dtype=torch.float32)
+        )
+
+    def forward(self, sequence_tensor):
+        return self.model(sequence_tensor) * self.target_scale + self.target_mean
