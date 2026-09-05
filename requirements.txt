@@ -2,6 +2,6 @@ numpy>=1.24,<3
 torch>=2.1
 tensorly>=0.8
 tensorly-torch>=0.5
-git+https://github.com/UTR-CODE/bioseq-optimization.git
+git+ssh://git@github.com/UTR-CODE/bioseq-optimization.git
 pytest>=7.4
 ruff>=0.8

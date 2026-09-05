@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Checkpoint-backed activity models for bioseq-optimization"
 requires-python = ">=3.10"
 dependencies = [
-    "bioseq-optimization @ git+https://github.com/UTR-CODE/bioseq-optimization.git",
+    "bioseq-optimization @ git+ssh://git@github.com/UTR-CODE/bioseq-optimization.git",
     "numpy>=1.24,<3",
     "torch>=2.1",
     "tensorly>=0.8",

@@ -11,13 +11,13 @@ Install directly from GitHub with pip. The optimization package is installed
 automatically as a dependency.
 
 ```bash
-python -m pip install git+https://github.com/UTR-CODE/bioseq-models.git
+python -m pip install git+ssh://git@github.com/UTR-CODE/bioseq-models.git
 ```
 
 For an editable checkout:
 
 ```bash
-git clone https://github.com/UTR-CODE/bioseq-models.git
+git clone git@github.com:UTR-CODE/bioseq-models.git
 cd bioseq-models
 python -m pip install -e .
 ```
