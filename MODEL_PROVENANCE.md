@@ -11,7 +11,7 @@ not copied.
 |---|---|---|
 | `optimus5prime` | one selected Optimus 5-Prime checkpoint | Published Optimus architecture; BioSeqBench-trained weights. |
 | `deepstarr` | one selected two-output checkpoint | Published DeepSTARR architecture; BioSeqBench-trained weights. |
-| `dream_legnet` | selected Autosome/LegNet checkpoint | Reproduced DREAM promoter model and validation-selected weights. |
+| `dream_legnet` | selected Autosome/LegNet checkpoint | Reproduced DREAM promoter model and validation-selected weights. Both the 110-bp dataset construct and differentiable 93-bp variable-region interfaces preserve the published 150-position preprocessing and reverse-complement average. |
 | `parm_k562` | epoch-10 checkpoint from each of 5 published folds | Exact PARM CNN, K562 task, adapters, fold protocol, and five-model average. Inference uses user-selected deterministic left/right padding; training used random placement. |
 | `agarwal_hepg2` | 10 practical held-out-fold checkpoints | Four-channel MPRALegNet reproduction with reverse-complement test-time averaging. |
 | `agarwal_k562` | 10 practical held-out-fold checkpoints | Same protocol, K562 labels. |

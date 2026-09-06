@@ -42,7 +42,7 @@ model, rather than as unrelated epoch files.
 |---|---|---|---|---|
 | `optimus5prime` | 50-nt 5′ UTR | MRL | paper architecture | Yes |
 | `deepstarr` | 249-bp enhancer | developmental, housekeeping | paper architecture | Yes |
-| `dream_legnet` | 110-bp yeast promoter | promoter activity | paper architecture | No |
+| `dream_legnet` | 110-bp construct or 93-bp variable region | promoter activity | paper architecture | Yes |
 | `cetnar_stability` | RNA/DNA, up to 80 nt | decay rate, negative decay (`stability`) | benchmark surrogate | Yes |
 | `parm_k562` | up to 586 bp; adapters added internally | K562 log2RPM | paper architecture, 5 folds | Yes |
 | `agarwal_hepg2` | 230-bp element | HepG2 log2(RNA/DNA) | paper architecture, 10 folds | Yes |
@@ -155,6 +155,38 @@ prediction = model.score(["ACGTCGATGCTAGCTAGGCTAACGTACGT"])
 ```
 
 Valid choices are `L3_s1`, `L3_s2`, `L3_s3`, and `L3_s4`.
+
+## Gradient optimization with DREAM LegNet
+
+The canonical DREAM construct contains a 17-bp left adapter that is discarded
+by the published preprocessing. For scoring dataset rows, the default interface
+still accepts the complete 110-bp construct. For gradient optimization, use the
+93-bp variable-region interface so every optimized position affects activity:
+
+```python
+from bioseq_models import load_model
+from sequence_optimization import SequenceSpace, fast_seqprop_optimize
+
+model = load_model(
+    "dream_legnet",
+    variable_region_only=True,
+    device="cpu",
+)
+
+result = fast_seqprop_optimize(
+    model,
+    SequenceSpace(length=93),
+    num_candidates=4,
+    budget=20,
+    seed=7,
+)
+```
+
+The differentiable transform inserts the fixed 57-bp context, changes channel
+order from A/C/G/T to A/G/C/T, adds the constant fifth channel, and retains
+forward/reverse-complement averaging. Calling `score_soft()` on the default
+110-bp interface is also supported, but the first 17 positions correctly have
+zero gradient.
 
 ## Cetnar paper LightGBM cascade
 

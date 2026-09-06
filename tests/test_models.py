@@ -1,9 +1,11 @@
 import numpy as np
 import pandas as pd
 import pytest
+import torch
 
 from bioseq_models import available_models, load_model, model_info
 from bioseq_models.tabular import CetnarLightGBM
+from sequence_optimization import SequenceSpace, fast_seqprop_optimize
 
 
 MODEL_CASES = [
@@ -43,6 +45,7 @@ def test_registry_and_aliases():
     assert model_info("optimus").name == "optimus5prime"
     assert model_info("dream").sequence_length == 110
     assert model_info("tfbind8").status == "weak_surrogate"
+    assert model_info("dream_legnet").differentiable
     assert model_info("kosuri").input_kind == "75nt_promoter+34nt_rbs"
     assert set(available_models(status="paper_architecture")) == {
         "optimus5prime",
@@ -163,3 +166,60 @@ def test_bounded_variable_length_models_honor_padding_side(name):
     right = load_model(name, device="cpu", padding_side="right").score([sequence])
     assert np.isfinite(left.scores).all()
     assert np.isfinite(right.scores).all()
+
+
+def _one_hot(sequence):
+    lookup = {base: index for index, base in enumerate("ACGT")}
+    indices = torch.tensor([[lookup[base] for base in sequence]])
+    return torch.nn.functional.one_hot(indices, num_classes=4).float()
+
+
+def test_dream_legnet_soft_input_matches_discrete_preprocessing_and_gradients():
+    variable = "ACGT" * 23 + "A"
+    full_construct = "T" * 17 + variable
+    full_model = load_model("dream_legnet", device="cpu")
+    variable_model = load_model("dream_legnet", device="cpu", variable_region_only=True)
+
+    full_discrete = full_model.score([full_construct]).scores
+    variable_discrete = variable_model.score([variable]).scores
+    full_probabilities = _one_hot(full_construct).requires_grad_(True)
+    variable_probabilities = _one_hot(variable).requires_grad_(True)
+    full_soft, _ = full_model.score_soft(full_probabilities)
+    variable_soft, _ = variable_model.score_soft(variable_probabilities)
+
+    np.testing.assert_allclose(
+        full_soft.detach().numpy().reshape(-1),
+        full_discrete.reshape(-1),
+        rtol=0,
+        atol=1e-6,
+    )
+    np.testing.assert_allclose(
+        variable_soft.detach().numpy().reshape(-1),
+        variable_discrete.reshape(-1),
+        rtol=0,
+        atol=1e-6,
+    )
+    np.testing.assert_allclose(full_discrete, variable_discrete, rtol=0, atol=1e-6)
+
+    full_soft.sum().backward()
+    variable_soft.sum().backward()
+    assert torch.count_nonzero(full_probabilities.grad[:, :17]).item() == 0
+    assert torch.count_nonzero(full_probabilities.grad[:, 17:]).item() > 0
+    assert torch.count_nonzero(variable_probabilities.grad).item() > 0
+
+
+def test_dream_legnet_runs_gradient_optimizer_on_93_variable_positions():
+    model = load_model("dream_legnet", device="cpu", variable_region_only=True)
+    initial = ["A" * 93, "C" * 93]
+    result = fast_seqprop_optimize(
+        model,
+        SequenceSpace(length=93),
+        initial=initial,
+        num_candidates=2,
+        budget=4,
+        learning_rate=0.1,
+        seed=7,
+    )
+    assert result.query_count == 4
+    assert result.activities.shape == (2, 1)
+    assert all(len(sequence) == 93 for sequence in result.sequences)
