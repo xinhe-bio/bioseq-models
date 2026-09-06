@@ -72,7 +72,7 @@ class ZhaoPtrcXGBoost(CallableScorer):
         # accepted but does not affect prediction.
         del batch_size
         super().__init__(
-            lambda values: model.predict(_xgboost_features(values)),
+            lambda values: model.inplace_predict(_xgboost_features(values)),
             **kwargs,
         )
         self.model = model
@@ -85,12 +85,12 @@ class ZhaoPtrcXGBoost(CallableScorer):
         device=None,
         **kwargs,
     ) -> "ZhaoPtrcXGBoost":
-        from xgboost import XGBRegressor
+        from xgboost import Booster
 
         path = Path(checkpoint)
         if not path.is_file():
             raise FileNotFoundError(f"Zhao XGBoost checkpoint not found: {path}")
-        model = XGBRegressor(n_jobs=1)
+        model = Booster(params={"nthread": 1})
         model.load_model(path)
         del device
         return cls(model, **kwargs)

@@ -18,6 +18,10 @@ Install from GitHub with pip. The optimizer package is installed automatically:
 python -m pip install git+ssh://git@github.com/UTR-CODE/bioseq-models.git
 ```
 
+For GPU execution, install the PyTorch build matching the machine's NVIDIA
+driver first; the command above will reuse it. Otherwise pip may select a newer
+CUDA runtime than an older server driver supports. CPU execution is unaffected.
+
 For an editable checkout:
 
 ```bash
