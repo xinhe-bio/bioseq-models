@@ -51,6 +51,20 @@ def encode_acgt_sequences(
     return torch.from_numpy(encoded)
 
 
+def encode_acgt_last_channel(
+    sequences: Sequence[str] | np.ndarray,
+    *,
+    exact_length: int | None = None,
+    padded_length: int | None = None,
+) -> torch.Tensor:
+    """One-hot encode to canonical ``[batch, length, A/C/G/T]`` layout."""
+    return encode_acgt_sequences(
+        sequences,
+        exact_length=exact_length,
+        padded_length=padded_length,
+    ).transpose(1, 2)
+
+
 def channels_first_with_padding(probabilities, padded_length: int):
     """Convert canonical ``[batch, length, 4]`` soft input and right-pad it."""
     if probabilities.ndim != 3 or probabilities.shape[-1] != 4:
@@ -77,3 +91,26 @@ class RestoredTargetScale(nn.Module):
 
     def forward(self, sequence_tensor):
         return self.model(sequence_tensor) * self.target_scale + self.target_mean
+
+
+def task_matrix(values: torch.Tensor) -> torch.Tensor:
+    """Normalize a model output to ``[batch, tasks]``."""
+    return values[:, None] if values.ndim == 1 else values
+
+
+class ScaledEnsemble(nn.Module):
+    """Average independently scaled members and return epistemic uncertainty."""
+
+    def __init__(self, models, means, scales) -> None:
+        super().__init__()
+        self.models = nn.ModuleList(models)
+        self.register_buffer("means", torch.as_tensor(means, dtype=torch.float32))
+        self.register_buffer("scales", torch.as_tensor(scales, dtype=torch.float32))
+
+    def forward(self, inputs):
+        predictions = []
+        for index, model in enumerate(self.models):
+            value = task_matrix(model(inputs))
+            predictions.append(value * self.scales[index] + self.means[index])
+        stacked = torch.stack(predictions)
+        return stacked.mean(dim=0), stacked.std(dim=0, unbiased=False)

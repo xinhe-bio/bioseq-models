@@ -1,36 +1,58 @@
 import numpy as np
+import pandas as pd
 import pytest
 
 from bioseq_models import available_models, load_model, model_info
+from bioseq_models.tabular import CetnarLightGBM
 
 
-@pytest.mark.parametrize(
-    ("name", "sequence", "tasks"),
-    [
-        ("optimus5prime", "A" * 50, 1),
-        ("deepstarr", "A" * 249, 2),
-        ("dream_legnet", "A" * 110, 1),
-        ("zhao_ptrc", "A" * 74, 1),
-        ("zhou_l3", "A" * 29, 1),
-    ],
-)
-def test_bundled_model_loads_and_predicts(name, sequence, tasks):
-    model = load_model(name, device="cpu", batch_size=2)
+MODEL_CASES = [
+    ("optimus5prime", "A" * 50, 1, {}),
+    ("deepstarr", "A" * 249, 2, {}),
+    ("dream_legnet", "A" * 110, 1, {}),
+    ("cetnar_stability", "A" * 60, 2, {}),
+    ("parm_k562", "A" * 80, 1, {}),
+    ("agarwal_hepg2", "A" * 230, 1, {}),
+    ("agarwal_k562", "A" * 230, 1, {}),
+    ("agarwal_wtc11", "A" * 230, 1, {}),
+    ("kosuri_composability", "A" * 109, 2, {}),
+    ("zhao_ptrc", "A" * 74, 1, {}),
+    ("zhao_ptrc_xgboost", "A" * 74, 1, {}),
+    ("zhou_l3_conditional", "A" * 29, 1, {"sublibrary": "L3_s2"}),
+    ("zhou_l3", "A" * 29, 1, {}),
+    ("tfbind8_weak", "A" * 8, 1, {}),
+    ("utr5_weak", "A" * 50, 1, {}),
+    ("dream_weak", "A" * 110, 1, {}),
+]
+
+
+@pytest.mark.parametrize(("name", "sequence", "tasks", "options"), MODEL_CASES)
+def test_bundled_model_loads_and_predicts(name, sequence, tasks, options):
+    model = load_model(name, device="cpu", batch_size=2, **options)
     prediction = model.score([sequence]).scores
-    assert prediction.size == tasks
+    expected_shapes = {(1, tasks)}
+    if tasks == 1:
+        expected_shapes.add((1,))
+    assert prediction.shape in expected_shapes
     assert np.isfinite(prediction).all()
     assert model.task_names == model_info(name).task_names
 
 
 def test_registry_and_aliases():
-    assert available_models() == (
+    assert available_models() == tuple(case[0] for case in MODEL_CASES)
+    assert model_info("optimus").name == "optimus5prime"
+    assert model_info("dream").sequence_length == 110
+    assert model_info("tfbind8").status == "weak_surrogate"
+    assert model_info("kosuri").input_kind == "75nt_promoter+34nt_rbs"
+    assert set(available_models(status="paper_architecture")) == {
         "optimus5prime",
         "deepstarr",
         "dream_legnet",
-        "zhao_ptrc",
-        "zhou_l3",
-    )
-    assert model_info("optimus").name == "optimus5prime"
+        "parm_k562",
+        "agarwal_hepg2",
+        "agarwal_k562",
+        "agarwal_wtc11",
+    }
 
 
 @pytest.mark.parametrize("padding_side", ["left", "right"])
@@ -44,3 +66,100 @@ def test_model_loader_supports_variable_length_sequences(padding_side):
     prediction = model.score(["ACGT" * 10]).scores
     assert prediction.shape == (1, 1)
     assert np.isfinite(prediction).all()
+
+
+def test_cetnar_exposes_decay_and_higher_is_better_stability():
+    model = load_model("cetnar_stability", device="cpu", padding_side="left")
+    values = model.score(["ACGT" * 10, "ACGT" * 15]).scores
+    assert values.shape == (2, 2)
+    np.testing.assert_allclose(values[:, 0], -values[:, 1])
+
+
+def test_kosuri_pair_api_matches_canonical_combined_slots():
+    model = load_model("kosuri_composability", device="cpu")
+    promoter, rbs = "ACGT" * 10, "TGCA" * 5
+    paired = model.score_pairs([promoter], [rbs]).scores
+    combined = promoter.ljust(75, "N") + rbs.ljust(34, "N")
+    direct = model.score([combined]).scores
+    np.testing.assert_allclose(paired, direct)
+
+
+def test_l3_conditional_validates_sublibrary():
+    with pytest.raises(ValueError, match="unknown L3 sublibrary"):
+        load_model("zhou_l3_conditional", sublibrary="missing")
+
+
+def test_cetnar_paper_lightgbm_bundle_loads_and_predicts_feature_rows():
+    model = CetnarLightGBM.from_checkpoint_dir()
+    feature_names = set()
+    for member in (*model.timepoint_models.values(), model.decay_model):
+        feature_names.update(member.feature_name())
+    frame = pd.DataFrame(
+        {name: [0] for name in feature_names if not name.startswith("predicted_")}
+    )
+    prediction = model.predict(frame)
+    assert prediction.shape == (1,)
+    assert np.isfinite(prediction).all()
+
+
+def test_migrated_sequence_checkpoints_replay_retained_predictions():
+    cases = [
+        (
+            "cetnar_stability",
+            "AAAAAAAAAAAAAAAAAAAACCCGCCAUAUGGCGGGAGGCGGACCGAGGGAGCAGCACGACGGGAC",
+            0.88651246,
+        ),
+        (
+            "zhao_ptrc",
+            "CTGACAATTAATCATCCGGCTCTTATAATGTGTGGAATTGCGGGCGGATAACAATTTCACACAGGAAACAGACC",
+            3.3800247,
+        ),
+        (
+            "zhao_ptrc_xgboost",
+            "CTGACAATTAATCATCCGGCTCTTATAATGTGTGGAATTGCGGGCGGATAACAATTTCACACAGGAAACAGACC",
+            3.5012786,
+        ),
+        (
+            "tfbind8_weak",
+            "ATTATGAA",
+            0.11835402,
+        ),
+        (
+            "utr5_weak",
+            "CGTGAAGAGAGATTCCGCCCAGAGTGCAACCTCTACGCCAGGCGTCATCA",
+            7.5493956,
+        ),
+        (
+            "dream_weak",
+            "TGCATTTTTTTCACATCTTTTTAAGTCATAACCAGTTTGGTCGGCACTGGGGCGTCCGCCTGGGCGGGAGTGCGGGAAGGTTACGGCTGTT",
+            13.2746525,
+        ),
+    ]
+    for name, sequence, expected in cases:
+        prediction = load_model(name, device="cpu").score([sequence]).scores
+        np.testing.assert_allclose(
+            prediction.reshape(-1)[0], expected, rtol=0, atol=2e-4
+        )
+
+
+def test_kosuri_replay_restores_genuine_log10_units():
+    model = load_model("kosuri_composability", device="cpu")
+    prediction = model.score_pairs(
+        ["GGCGCGCCATTAATCATCCGGAATG"],
+        ["ATCTTAATCTAGCGCGGGAGTATTTCATATG"],
+    ).scores
+    np.testing.assert_allclose(
+        prediction[0],
+        [3.0738265623, -2.2585909275],
+        rtol=0,
+        atol=2e-4,
+    )
+
+
+@pytest.mark.parametrize("name", ["cetnar_stability", "zhao_ptrc", "zhao_ptrc_xgboost"])
+def test_bounded_variable_length_models_honor_padding_side(name):
+    sequence = "ACGT" * 10
+    left = load_model(name, device="cpu", padding_side="left").score([sequence])
+    right = load_model(name, device="cpu", padding_side="right").score([sequence])
+    assert np.isfinite(left.scores).all()
+    assert np.isfinite(right.scores).all()

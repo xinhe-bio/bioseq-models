@@ -5,14 +5,32 @@ from __future__ import annotations
 from pathlib import Path
 
 import torch
+import numpy as np
 
-from sequence_optimization import DifferentiableTorchSequenceScorer
+from sequence_optimization import CallableScorer, DifferentiableTorchSequenceScorer
 
 from ..architectures import PtrcPromoterCNN
 from .common import CHECKPOINT_DIR, channels_first_with_padding, encode_acgt_sequences
 
 
 DEFAULT_CHECKPOINT = CHECKPOINT_DIR / "zhao_ptrc.pt"
+DEFAULT_XGBOOST_CHECKPOINT = CHECKPOINT_DIR / "zhao_ptrc_xgboost.json"
+
+
+def _xgboost_features(values, length: int = 76) -> np.ndarray:
+    values = np.asarray(values, dtype=str).reshape(-1)
+    encoded = np.zeros((len(values), 4, length), dtype=np.float32)
+    lookup = {base: channel for channel, base in enumerate("ACGT")}
+    for row, sequence in enumerate(values):
+        if len(sequence) > length:
+            raise ValueError(f"Ptrc sequence exceeds {length} nucleotides")
+        for position, base in enumerate(sequence):
+            if base == "N":
+                continue
+            if base not in lookup:
+                raise ValueError(f"invalid nucleotide {base!r}")
+            encoded[row, lookup[base], position] = 1.0
+    return encoded.reshape(len(values), -1)
 
 
 class ZhaoPtrc(DifferentiableTorchSequenceScorer):
@@ -20,6 +38,7 @@ class ZhaoPtrc(DifferentiableTorchSequenceScorer):
 
     def __init__(self, model: PtrcPromoterCNN | None = None, **kwargs):
         kwargs.setdefault("task_names", ("log10_fluorescence_per_od600",))
+        kwargs.setdefault("pad_to_length", 76)
         super().__init__(
             model or PtrcPromoterCNN(),
             lambda values: encode_acgt_sequences(values, padded_length=76),
@@ -40,3 +59,38 @@ class ZhaoPtrc(DifferentiableTorchSequenceScorer):
         model = PtrcPromoterCNN()
         model.load_state_dict(state["model_state"])
         return cls(model=model, **kwargs)
+
+
+class ZhaoPtrcXGBoost(CallableScorer):
+    """Functional reproduction of the paper's selected tree-model family."""
+
+    def __init__(self, model, *, batch_size=None, **kwargs) -> None:
+        kwargs.setdefault("task_names", ("log10_fluorescence_per_od600",))
+        kwargs.setdefault("pad_to_length", 76)
+        # ``load_model`` accepts one common set of runtime options.  XGBoost
+        # evaluates the full matrix directly, so this option is intentionally
+        # accepted but does not affect prediction.
+        del batch_size
+        super().__init__(
+            lambda values: model.predict(_xgboost_features(values)),
+            **kwargs,
+        )
+        self.model = model
+
+    @classmethod
+    def from_checkpoint(
+        cls,
+        checkpoint: str | Path = DEFAULT_XGBOOST_CHECKPOINT,
+        *,
+        device=None,
+        **kwargs,
+    ) -> "ZhaoPtrcXGBoost":
+        from xgboost import XGBRegressor
+
+        path = Path(checkpoint)
+        if not path.is_file():
+            raise FileNotFoundError(f"Zhao XGBoost checkpoint not found: {path}")
+        model = XGBRegressor(n_jobs=1)
+        model.load_model(path)
+        del device
+        return cls(model, **kwargs)
