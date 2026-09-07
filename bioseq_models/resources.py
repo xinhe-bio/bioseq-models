@@ -9,11 +9,12 @@ from huggingface_hub import hf_hub_download
 
 
 HF_REPO_ID = "xinHesysu/bioseq-models"
-HF_REVISION = "v0.5.0"
+HF_REVISION = "v0.6.0"
 
 MODEL_FILES = {
     "optimus5prime": ("checkpoints/optimus5prime.pt",),
     "deepstarr": ("checkpoints/deepstarr.pt",),
+    "malinois": ("checkpoints/malinois.pt",),
     "dream_legnet": ("checkpoints/dream_legnet.pt",),
     "cetnar_stability": ("checkpoints/cetnar_stability_cnn.pt",),
     "utr_code": ("utr_code/best.epoch", "utr_code/HEK293T.txt"),

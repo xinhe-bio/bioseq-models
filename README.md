@@ -11,7 +11,7 @@ pip install "git+https://github.com/UTR-CODE/bioseq-models.git"
 Only the files required by the selected model are downloaded from Hugging Face
 on first use and cached locally. The weights are hosted in the
 [`xinHesysu/bioseq-models`](https://huggingface.co/xinHesysu/bioseq-models)
-model repository and pinned to the `v0.5.0` revision.
+model repository and pinned to the `v0.6.0` revision.
 
 ## Basic use
 
@@ -42,6 +42,25 @@ download_model("optimus5prime")
 ```
 
 This downloads one Optimus checkpoint, not the complete model collection.
+
+## Malinois
+
+Malinois predicts enhancer activity in three human cell types. Supply the
+200-nt candidate enhancer; the adapter adds the official MPRA vector context
+expected by the model.
+
+```python
+from bioseq_models import load_model
+
+model = load_model("malinois", device="cpu")
+prediction = model.score([
+    "ACGT" * 50,
+    "TGCA" * 50,
+])
+
+# Columns: K562_log2FC, HepG2_log2FC, SKNSH_log2FC
+print(prediction)
+```
 
 ## UTR-CODE
 
@@ -107,6 +126,7 @@ normalized model score, not a half-life measured in hours.
 | `utr_code` | up to 1000-nt 5′UTR, 4500-nt CDS, or 4000-nt 3′UTR | `log1p_rpf_rpkm_x5` |
 | `cds_stability` | complete CDS up to 9000 nt | `stability_score` |
 | `deepstarr` | 249 nt | `developmental`, `housekeeping` |
+| `malinois` | 200-nt enhancer | `K562_log2FC`, `HepG2_log2FC`, `SKNSH_log2FC` |
 | `dream_legnet` | 110-nt construct or 93-nt variable region | `promoter_activity` |
 | `cetnar_stability` | up to 80 nt | `decay_rate_k_fit` |
 | `parm_k562` | up to 586 nt | `log2rpm_k562` |

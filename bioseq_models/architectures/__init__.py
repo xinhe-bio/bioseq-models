@@ -5,6 +5,7 @@ from .cetnar import CetnarStabilityCNNBiLSTM
 from .cds_stability import CDSStabilityNetwork
 from .deepstarr import DeepSTARRPaper
 from .dream_legnet import LegNetAutosome
+from .malinois import MalinoisNetwork
 from .optimus5prime import Optimus5Prime
 from .parm import PARMExactCNN
 from .utr_code import UTRCodeNetwork
@@ -15,6 +16,7 @@ __all__ = [
     "CDSStabilityNetwork",
     "DeepSTARRPaper",
     "LegNetAutosome",
+    "MalinoisNetwork",
     "Optimus5Prime",
     "PARMExactCNN",
     "UTRCodeNetwork",

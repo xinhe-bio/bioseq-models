@@ -39,6 +39,14 @@ _MODELS = (
         status="paper_architecture",
     ),
     ModelInfo(
+        "malinois",
+        200,
+        ("K562_log2FC", "HepG2_log2FC", "SKNSH_log2FC"),
+        "Malinois three-cell-type enhancer activity model",
+        "bioseq_models.adapters.malinois:Malinois",
+        status="official_checkpoint",
+    ),
+    ModelInfo(
         "dream_legnet",
         110,
         ("promoter_activity",),

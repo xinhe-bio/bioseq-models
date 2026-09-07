@@ -8,6 +8,7 @@ from bioseq_models import resources
 MODEL_CASES = [
     ("optimus5prime", "A" * 50, 1, {}),
     ("deepstarr", "A" * 249, 2, {}),
+    ("malinois", "A" * 200, 3, {}),
     ("dream_legnet", "A" * 110, 1, {}),
     ("cetnar_stability", "A" * 60, 1, {}),
     (
@@ -59,6 +60,7 @@ def test_registry_and_aliases():
         "agarwal_k562",
         "agarwal_wtc11",
     }
+    assert available_models(status="official_checkpoint") == ("malinois",)
 
 
 @pytest.mark.parametrize("padding_side", ["left", "right"])
@@ -94,6 +96,16 @@ def test_cetnar_checkpoint_replays_retained_prediction():
     )
     prediction = load_model("cetnar_stability", device="cpu").score([sequence])
     np.testing.assert_allclose(prediction[0, 0], 0.88651246, rtol=0, atol=2e-4)
+
+
+def test_malinois_official_checkpoint_replays_retained_prediction():
+    prediction = load_model("malinois", device="cpu").score(["ACGT" * 50])
+    np.testing.assert_allclose(
+        prediction[0],
+        [9.92313004, 8.74214935, 16.36242104],
+        rtol=0,
+        atol=1e-5,
+    )
 
 
 def test_dream_legnet_full_and_variable_region_inputs_match():
@@ -158,4 +170,4 @@ def test_hugging_face_download_is_scoped_to_one_model(monkeypatch, tmp_path):
         "utr_code/HEK293T.txt",
     ]
     assert all(call["repo_id"] == "xinHesysu/bioseq-models" for call in calls)
-    assert all(call["revision"] == "v0.5.0" for call in calls)
+    assert all(call["revision"] == "v0.6.0" for call in calls)

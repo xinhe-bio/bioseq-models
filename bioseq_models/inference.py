@@ -10,11 +10,10 @@ import numpy as np
 
 def normalize_sequences(sequences: Sequence[str] | np.ndarray) -> np.ndarray:
     """Return uppercase DNA notation, converting RNA U to T."""
-    values = np.char.replace(
-        np.char.upper(np.asarray(sequences, dtype=str).reshape(-1)),
-        "U",
-        "T",
-    )
+    values = np.asarray(sequences, dtype=str).reshape(-1)
+    if not len(values):
+        return values
+    values = np.char.replace(np.char.upper(values), "U", "T")
     for row, sequence in enumerate(values):
         invalid = sorted(set(sequence) - set("ACGTN"))
         if invalid:
