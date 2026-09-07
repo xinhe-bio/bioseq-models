@@ -9,6 +9,11 @@ Upload this file as one Zenodo record file:
 The adjacent `.manifest.json` file records the bundle contents and can also be
 attached to the record, but the Python package only downloads the ZIP.
 
+Do not apply Zenodo's default CC BY 4.0 license to the entire bundle. The
+included CodonBERT artifact is restricted to academic, non-commercial use by
+its upstream artifact license. Add that license as a custom license and link to
+`https://github.com/Sanofi-Public/CodonBERT/blob/master/ARTIFACT_LICENSE.md`.
+
 After publishing the record, copy the permanent file-download URL into
 `ZENODO_URL` in `bioseq_models/resources.py`. Test the published file with:
 

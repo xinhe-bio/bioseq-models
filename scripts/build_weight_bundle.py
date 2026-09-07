@@ -32,6 +32,7 @@ def arguments() -> argparse.Namespace:
 
 def main() -> None:
     args = arguments()
+    repository = Path(__file__).resolve().parents[1]
     files: list[tuple[Path, str]] = []
     for source in sorted(args.existing_checkpoints.glob("*.pt")):
         files.append((source, f"checkpoints/{source.name}"))
@@ -48,6 +49,7 @@ def main() -> None:
                 args.codonbert_directory / "pytorch_model.bin",
                 "cds_stability/codonbert/pytorch_model.bin",
             ),
+            (repository / "THIRD_PARTY_NOTICES.md", "THIRD_PARTY_NOTICES.md"),
         ]
     )
     missing = [str(source) for source, _ in files if not source.is_file()]
