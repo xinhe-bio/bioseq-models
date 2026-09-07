@@ -3,14 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from pathlib import Path
-
 import numpy as np
 import torch
 from torch import nn
-
-
-CHECKPOINT_DIR = Path(__file__).resolve().parents[1] / "checkpoints"
 
 
 def encode_acgt_sequences(

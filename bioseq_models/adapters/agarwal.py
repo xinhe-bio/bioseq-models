@@ -9,12 +9,14 @@ from torch import nn
 
 from ..architectures import MPRALegNet
 from ..inference import TorchSequenceModel
-from .common import CHECKPOINT_DIR, encode_acgt_sequences, task_matrix
+from ..resources import weight_path
+from .common import encode_acgt_sequences, task_matrix
 
 
-def _checkpoint_paths(cell_type: str) -> tuple[Path, ...]:
+def _checkpoint_paths(cell_type: str, weights_dir=None) -> tuple[Path, ...]:
     return tuple(
-        CHECKPOINT_DIR / f"agarwal_{cell_type}_fold{fold}.pt" for fold in range(1, 11)
+        weight_path(f"checkpoints/agarwal_{cell_type}_fold{fold}.pt", weights_dir)
+        for fold in range(1, 11)
     )
 
 
@@ -52,9 +54,9 @@ class AgarwalMPRALegNet(TorchSequenceModel):
         self.cv_folds = 10
 
     @classmethod
-    def from_checkpoint(cls, checkpoint=None, **kwargs):
+    def from_checkpoint(cls, checkpoint=None, weights_dir=None, **kwargs):
         paths = (
-            _checkpoint_paths(cls.cell_type)
+            _checkpoint_paths(cls.cell_type, weights_dir)
             if checkpoint is None
             else (Path(checkpoint),)
         )

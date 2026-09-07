@@ -8,10 +8,8 @@ import torch
 
 from ..architectures import DeepSTARRPaper
 from ..inference import TorchSequenceModel
-from .common import CHECKPOINT_DIR, encode_acgt_sequences
-
-
-DEFAULT_CHECKPOINT = CHECKPOINT_DIR / "deepstarr.pt"
+from ..resources import weight_path
+from .common import encode_acgt_sequences
 
 
 class DeepSTARR(TorchSequenceModel):
@@ -26,10 +24,13 @@ class DeepSTARR(TorchSequenceModel):
     @classmethod
     def from_checkpoint(
         cls,
-        checkpoint: str | Path = DEFAULT_CHECKPOINT,
+        checkpoint: str | Path | None = None,
+        weights_dir: str | Path | None = None,
         **kwargs,
     ) -> "DeepSTARR":
-        path = Path(checkpoint)
+        path = Path(checkpoint) if checkpoint else weight_path(
+            "checkpoints/deepstarr.pt", weights_dir
+        )
         if not path.is_file():
             raise FileNotFoundError(f"DeepSTARR checkpoint not found: {path}")
         state = torch.load(path, map_location="cpu", weights_only=True)

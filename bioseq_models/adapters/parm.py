@@ -9,18 +9,14 @@ import torch
 
 from ..architectures import PARMExactCNN
 from ..inference import TorchSequenceModel
-from .common import CHECKPOINT_DIR, ScaledEnsemble, encode_acgt_sequences
+from ..resources import weight_path
+from .common import ScaledEnsemble, encode_acgt_sequences
 
 
 MODEL_LENGTH = 600
 ADAPTER_5 = "CAGTGAT"
 ADAPTER_3 = "CACGACG"
 MAX_BIOLOGICAL_LENGTH = MODEL_LENGTH - len(ADAPTER_5) - len(ADAPTER_3)
-DEFAULT_CHECKPOINTS = tuple(
-    CHECKPOINT_DIR / f"parm_k562_fold{fold}.pt" for fold in range(5)
-)
-
-
 def _validate_side(side: str) -> str:
     side = str(side).lower()
     if side not in {"left", "right"}:
@@ -66,8 +62,17 @@ class PARMK562(TorchSequenceModel):
         self.model_input_length = MODEL_LENGTH
 
     @classmethod
-    def from_checkpoint(cls, checkpoint=None, **kwargs) -> "PARMK562":
-        paths = DEFAULT_CHECKPOINTS if checkpoint is None else (Path(checkpoint),)
+    def from_checkpoint(
+        cls, checkpoint=None, weights_dir: str | Path | None = None, **kwargs
+    ) -> "PARMK562":
+        paths = (
+            tuple(
+                weight_path(f"checkpoints/parm_k562_fold{fold}.pt", weights_dir)
+                for fold in range(5)
+            )
+            if checkpoint is None
+            else (Path(checkpoint),)
+        )
         models = []
         for path in paths:
             state = torch.load(path, map_location="cpu", weights_only=True)

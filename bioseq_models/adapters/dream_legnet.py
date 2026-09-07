@@ -9,10 +9,8 @@ from torch import nn
 
 from ..architectures import LegNetAutosome
 from ..inference import TorchSequenceModel
-from .common import CHECKPOINT_DIR, encode_acgt_sequences
-
-
-DEFAULT_CHECKPOINT = CHECKPOINT_DIR / "dream_legnet.pt"
+from ..resources import weight_path
+from .common import encode_acgt_sequences
 LEFT_ADAPTER_LENGTH = 17
 FULL_SEQUENCE_LENGTH = 110
 VARIABLE_REGION_LENGTH = FULL_SEQUENCE_LENGTH - LEFT_ADAPTER_LENGTH
@@ -94,10 +92,13 @@ class DreamLegNet(TorchSequenceModel):
     @classmethod
     def from_checkpoint(
         cls,
-        checkpoint: str | Path = DEFAULT_CHECKPOINT,
+        checkpoint: str | Path | None = None,
+        weights_dir: str | Path | None = None,
         **kwargs,
     ) -> "DreamLegNet":
-        path = Path(checkpoint)
+        path = Path(checkpoint) if checkpoint else weight_path(
+            "checkpoints/dream_legnet.pt", weights_dir
+        )
         if not path.is_file():
             raise FileNotFoundError(f"DREAM LegNet checkpoint not found: {path}")
         state = torch.load(path, map_location="cpu", weights_only=True)

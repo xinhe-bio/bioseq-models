@@ -9,6 +9,22 @@ MODEL_CASES = [
     ("deepstarr", "A" * 249, 2, {}),
     ("dream_legnet", "A" * 110, 1, {}),
     ("cetnar_stability", "A" * 60, 1, {}),
+    (
+        "utr_code",
+        "ACGT" * 25,
+        1,
+        {
+            "design_region": "utr3",
+            "utr5": "ACGT" * 20,
+            "cds": "ATG" + "GCT" * 18 + "TAA",
+        },
+    ),
+    (
+        "cds_stability",
+        "ATG" + "GCT" * 18 + "TAA",
+        1,
+        {"species": "human"},
+    ),
     ("parm_k562", "A" * 80, 1, {}),
     ("agarwal_hepg2", "A" * 230, 1, {}),
     ("agarwal_k562", "A" * 230, 1, {}),
@@ -31,6 +47,8 @@ def test_registry_and_aliases():
     assert model_info("optimus").name == "optimus5prime"
     assert model_info("dream").sequence_length == 110
     assert model_info("dream_legnet").task_names == ("promoter_activity",)
+    assert model_info("utrcode").name == "utr_code"
+    assert model_info("mrna_stability").name == "cds_stability"
     assert set(available_models(status="paper_architecture")) == {
         "optimus5prime",
         "deepstarr",
@@ -100,3 +118,24 @@ def test_invalid_nucleotide_raises_value_error():
     model = load_model("optimus5prime", device="cpu")
     with pytest.raises(ValueError, match="invalid nucleotide"):
         model.score(["A" * 49 + "X"])
+
+
+def test_utr_code_replays_retained_prediction():
+    model = load_model(
+        "utr_code",
+        device="cpu",
+        batch_size=1,
+        design_region="utr3",
+        utr5="ACGT" * 20,
+        cds="ATG" + "GCT" * 98 + "TAA",
+    )
+    prediction = model.score(["ACGT" * 25])
+    np.testing.assert_allclose(prediction[0, 0], 7.63377285, rtol=0, atol=1e-6)
+
+
+def test_cds_stability_validates_complete_codon_input():
+    model = load_model("cds_stability", device="cpu", species="human")
+    with pytest.raises(ValueError, match="divisible by 3"):
+        model.score(["ATGA"])
+    with pytest.raises(ValueError, match="contains N"):
+        model.score(["ATGNNNTAA"])

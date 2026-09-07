@@ -9,10 +9,8 @@ from torch import nn
 
 from ..architectures import CetnarStabilityCNNBiLSTM
 from ..inference import TorchSequenceModel
-from .common import CHECKPOINT_DIR, encode_acgt_last_channel
-
-
-DEFAULT_CHECKPOINT = CHECKPOINT_DIR / "cetnar_stability_cnn.pt"
+from ..resources import weight_path
+from .common import encode_acgt_last_channel
 
 
 class _RestoredDecay(nn.Module):
@@ -44,10 +42,13 @@ class CetnarStability(TorchSequenceModel):
     @classmethod
     def from_checkpoint(
         cls,
-        checkpoint: str | Path = DEFAULT_CHECKPOINT,
+        checkpoint: str | Path | None = None,
+        weights_dir: str | Path | None = None,
         **kwargs,
     ) -> "CetnarStability":
-        path = Path(checkpoint)
+        path = Path(checkpoint) if checkpoint else weight_path(
+            "checkpoints/cetnar_stability_cnn.pt", weights_dir
+        )
         if not path.is_file():
             raise FileNotFoundError(f"Cetnar checkpoint not found: {path}")
         state = torch.load(path, map_location="cpu", weights_only=True)

@@ -9,10 +9,8 @@ from torch import nn
 
 from ..architectures import Optimus5Prime as Optimus5PrimeNetwork
 from ..inference import TorchSequenceModel
-from .common import CHECKPOINT_DIR, RestoredTargetScale, encode_acgt_sequences
-
-
-DEFAULT_CHECKPOINT = CHECKPOINT_DIR / "optimus5prime.pt"
+from ..resources import weight_path
+from .common import RestoredTargetScale, encode_acgt_sequences
 
 
 class Optimus5Prime(TorchSequenceModel):
@@ -29,10 +27,13 @@ class Optimus5Prime(TorchSequenceModel):
     @classmethod
     def from_checkpoint(
         cls,
-        checkpoint: str | Path = DEFAULT_CHECKPOINT,
+        checkpoint: str | Path | None = None,
+        weights_dir: str | Path | None = None,
         **kwargs,
     ) -> "Optimus5Prime":
-        path = Path(checkpoint)
+        path = Path(checkpoint) if checkpoint else weight_path(
+            "checkpoints/optimus5prime.pt", weights_dir
+        )
         if not path.is_file():
             raise FileNotFoundError(f"Optimus checkpoint not found: {path}")
         state = torch.load(path, map_location="cpu", weights_only=False)
