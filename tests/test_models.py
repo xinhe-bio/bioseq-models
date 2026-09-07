@@ -157,4 +157,5 @@ def test_hugging_face_download_is_scoped_to_one_model(monkeypatch, tmp_path):
         "utr_code/best.epoch",
         "utr_code/HEK293T.txt",
     ]
-    assert all(call["repo_id"] == "UTR-CODE/bioseq-models" for call in calls)
+    assert all(call["repo_id"] == "xinHesysu/bioseq-models" for call in calls)
+    assert all(call["revision"] == "v0.5.0" for call in calls)

@@ -9,7 +9,9 @@ pip install "git+https://github.com/UTR-CODE/bioseq-models.git"
 ```
 
 Only the files required by the selected model are downloaded from Hugging Face
-on first use and cached locally.
+on first use and cached locally. The weights are hosted in the
+[`xinHesysu/bioseq-models`](https://huggingface.co/xinHesysu/bioseq-models)
+model repository and pinned to the `v0.5.0` revision.
 
 ## Basic use
 

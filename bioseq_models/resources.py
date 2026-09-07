@@ -8,8 +8,8 @@ from pathlib import Path
 from huggingface_hub import hf_hub_download
 
 
-HF_REPO_ID = "UTR-CODE/bioseq-models"
-HF_REVISION = "main"
+HF_REPO_ID = "xinHesysu/bioseq-models"
+HF_REVISION = "v0.5.0"
 
 MODEL_FILES = {
     "optimus5prime": ("checkpoints/optimus5prime.pt",),
