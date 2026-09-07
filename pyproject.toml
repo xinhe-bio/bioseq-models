@@ -4,22 +4,22 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bioseq-models"
-version = "0.2.2"
-description = "Checkpoint-backed activity models for bioseq-optimization"
+version = "0.3.0"
+description = "Ready-to-use checkpoint-backed biological sequence models"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "bioseq-optimization @ git+ssh://git@github.com/UTR-CODE/bioseq-optimization.git",
     "einops>=0.7",
-    "lightgbm>=4",
     "numpy>=1.24,<3",
     "packaging>=23",
-    "pandas>=2",
     "torch>=2.1",
     "tensorly>=0.8",
     "tensorly-torch>=0.5",
     "xgboost>=2",
 ]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4", "ruff>=0.8"]
 
 [project.urls]
 Repository = "https://github.com/UTR-CODE/bioseq-models"
@@ -28,7 +28,7 @@ Repository = "https://github.com/UTR-CODE/bioseq-models"
 include = ["bioseq_models*"]
 
 [tool.setuptools.package-data]
-bioseq_models = ["checkpoints/*.pt", "checkpoints/*.json", "checkpoints/*.txt"]
+bioseq_models = ["checkpoints/*.pt", "checkpoints/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,4 +1,4 @@
-"""Optimization-ready Kosuri promoter/RBS composability adapter."""
+"""Kosuri promoter/RBS composability adapter."""
 
 from __future__ import annotations
 
@@ -8,9 +8,8 @@ import numpy as np
 import torch
 from torch import nn
 
-from sequence_optimization import DifferentiableTorchSequenceScorer
-
 from ..architectures import KosuriTwoBranchCNN
+from ..inference import TorchSequenceModel
 from .common import CHECKPOINT_DIR, encode_acgt_last_channel
 
 
@@ -47,7 +46,7 @@ class _CombinedKosuriModel(nn.Module):
         return standardized * self.target_scale + self.target_mean
 
 
-class KosuriComposability(DifferentiableTorchSequenceScorer):
+class KosuriComposability(TorchSequenceModel):
     """Use a 75-nt promoter slot followed by a 34-nt RBS slot."""
 
     def __init__(self, model: nn.Module, **kwargs) -> None:

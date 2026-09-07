@@ -1,4 +1,4 @@
-"""Optimization-ready Zhou L3 checkpoint adapter."""
+"""Zhou L3 checkpoint adapter."""
 
 from __future__ import annotations
 
@@ -6,9 +6,8 @@ from pathlib import Path
 
 import torch
 
-from sequence_optimization import DifferentiableTorchSequenceScorer
-
 from ..architectures import L3ConditionalCNN, L3PositionAwareCNN
+from ..inference import TorchSequenceModel
 from .common import CHECKPOINT_DIR, RestoredTargetScale, encode_acgt_sequences
 
 
@@ -36,13 +35,12 @@ class _FixedSublibrary(torch.nn.Module):
         return self.model(inputs, identifiers) * self.target_scale + self.target_mean
 
 
-class ZhouL3(DifferentiableTorchSequenceScorer):
+class ZhouL3(TorchSequenceModel):
     def __init__(self, model=None, **kwargs):
         kwargs.setdefault("task_names", ("promoter_activity",))
         super().__init__(
             model or L3PositionAwareCNN(length=29),
             lambda values: encode_acgt_sequences(values, exact_length=29),
-            soft_input_transform=lambda values: values.transpose(1, 2),
             **kwargs,
         )
 
@@ -64,7 +62,7 @@ class ZhouL3(DifferentiableTorchSequenceScorer):
         return cls(model=model, **kwargs)
 
 
-class ZhouL3Conditional(DifferentiableTorchSequenceScorer):
+class ZhouL3Conditional(TorchSequenceModel):
     """Canonical L3 model with one fixed documented source sublibrary."""
 
     def __init__(self, model, *, sublibrary: str, **kwargs) -> None:
@@ -72,7 +70,6 @@ class ZhouL3Conditional(DifferentiableTorchSequenceScorer):
         super().__init__(
             model,
             lambda values: encode_acgt_sequences(values, exact_length=29),
-            soft_input_transform=lambda values: values.transpose(1, 2),
             **kwargs,
         )
         self.sublibrary = sublibrary

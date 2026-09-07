@@ -1,4 +1,4 @@
-"""Optimization-ready adapters for bundled model checkpoints."""
+"""Inference adapters for bundled model checkpoints."""
 
 from .agarwal import AgarwalHepG2, AgarwalK562, AgarwalWTC11
 from .cetnar import CetnarStability

@@ -1,4 +1,4 @@
-"""Optimization-ready Zhao Ptrc checkpoint adapter."""
+"""Zhao Ptrc checkpoint adapters."""
 
 from __future__ import annotations
 
@@ -7,10 +7,9 @@ from pathlib import Path
 import torch
 import numpy as np
 
-from sequence_optimization import CallableScorer, DifferentiableTorchSequenceScorer
-
 from ..architectures import PtrcPromoterCNN
-from .common import CHECKPOINT_DIR, channels_first_with_padding, encode_acgt_sequences
+from ..inference import CallableSequenceModel, TorchSequenceModel
+from .common import CHECKPOINT_DIR, encode_acgt_sequences
 
 
 DEFAULT_CHECKPOINT = CHECKPOINT_DIR / "zhao_ptrc.pt"
@@ -33,7 +32,7 @@ def _xgboost_features(values, length: int = 76) -> np.ndarray:
     return encoded.reshape(len(values), -1)
 
 
-class ZhaoPtrc(DifferentiableTorchSequenceScorer):
+class ZhaoPtrc(TorchSequenceModel):
     """Predict log10 fluorescence/OD600 for Ptrc-derived promoters."""
 
     def __init__(self, model: PtrcPromoterCNN | None = None, **kwargs):
@@ -42,7 +41,6 @@ class ZhaoPtrc(DifferentiableTorchSequenceScorer):
         super().__init__(
             model or PtrcPromoterCNN(),
             lambda values: encode_acgt_sequences(values, padded_length=76),
-            soft_input_transform=lambda values: channels_first_with_padding(values, 76),
             **kwargs,
         )
 
@@ -61,7 +59,7 @@ class ZhaoPtrc(DifferentiableTorchSequenceScorer):
         return cls(model=model, **kwargs)
 
 
-class ZhaoPtrcXGBoost(CallableScorer):
+class ZhaoPtrcXGBoost(CallableSequenceModel):
     """Functional reproduction of the paper's selected tree-model family."""
 
     def __init__(self, model, *, batch_size=None, **kwargs) -> None:

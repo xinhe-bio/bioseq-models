@@ -1,4 +1,4 @@
-"""Optimization-ready TFBind8 weak-ensemble adapter."""
+"""TFBind8 weak-ensemble adapter."""
 
 from __future__ import annotations
 
@@ -6,9 +6,8 @@ from pathlib import Path
 
 import torch
 
-from sequence_optimization import DifferentiableTorchSequenceScorer
-
 from ..architectures import TFBindCNN
+from ..inference import TorchSequenceModel
 from .common import CHECKPOINT_DIR, ScaledEnsemble, encode_acgt_sequences
 
 
@@ -17,7 +16,7 @@ DEFAULT_CHECKPOINTS = tuple(
 )
 
 
-class TFBind8Weak(DifferentiableTorchSequenceScorer):
+class TFBind8Weak(TorchSequenceModel):
     """Ten-member CNN trained on the lower 95% of the TFBind8 landscape."""
 
     def __init__(self, model, **kwargs) -> None:
@@ -26,7 +25,6 @@ class TFBind8Weak(DifferentiableTorchSequenceScorer):
         super().__init__(
             model,
             lambda values: encode_acgt_sequences(values, exact_length=8),
-            soft_input_transform=lambda values: values.transpose(1, 2),
             **kwargs,
         )
         self.train_fraction = 0.95

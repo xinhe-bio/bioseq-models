@@ -8,9 +8,8 @@ import numpy as np
 import torch
 from torch import nn
 
-from sequence_optimization import DifferentiableTorchSequenceScorer
-
 from ..architectures import WeakSeqCNN
+from ..inference import TorchSequenceModel
 from .common import CHECKPOINT_DIR, encode_acgt_last_channel, task_matrix
 
 
@@ -36,7 +35,7 @@ class _WeakEnsemble(nn.Module):
             standardized = task_matrix(model(inputs, mask=mask))
             predictions.append(standardized * self.scales[index] + self.means[index])
         stacked = torch.stack(predictions)
-        return stacked.mean(dim=0), stacked.std(dim=0, unbiased=False)
+        return stacked.mean(dim=0)
 
 
 def _load_weak_ensemble(paths, expected_dataset: str):
@@ -57,7 +56,7 @@ def _load_weak_ensemble(paths, expected_dataset: str):
     return _WeakEnsemble(models, means, scales), lengths.pop(), fractions.pop()
 
 
-class UTR5Weak(DifferentiableTorchSequenceScorer):
+class UTR5Weak(TorchSequenceModel):
     """Five-member 5′UTR WeakSeqCNN trained on the lower 95% pool."""
 
     def __init__(self, model, **kwargs) -> None:
@@ -79,7 +78,7 @@ class UTR5Weak(DifferentiableTorchSequenceScorer):
         return cls(model, **kwargs)
 
 
-class DreamWeak(DifferentiableTorchSequenceScorer):
+class DreamWeak(TorchSequenceModel):
     """Five-member variable-length DREAM WeakSeqCNN lower-95% ensemble."""
 
     maximum_length = 142
@@ -93,15 +92,9 @@ class DreamWeak(DifferentiableTorchSequenceScorer):
                 raise ValueError("DREAM WeakSeqCNN accepts at most 142 nucleotides")
             return encode_acgt_last_channel(values)
 
-        def validate_soft(values):
-            if values.shape[1] > self.maximum_length:
-                raise ValueError("DREAM WeakSeqCNN accepts at most 142 nucleotides")
-            return values
-
         super().__init__(
             model,
             encode,
-            soft_input_transform=validate_soft,
             **kwargs,
         )
         self.train_fraction = 0.95

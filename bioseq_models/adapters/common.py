@@ -8,7 +8,6 @@ from pathlib import Path
 import numpy as np
 import torch
 from torch import nn
-from torch.nn import functional as functional
 
 
 CHECKPOINT_DIR = Path(__file__).resolve().parents[1] / "checkpoints"
@@ -65,19 +64,6 @@ def encode_acgt_last_channel(
     ).transpose(1, 2)
 
 
-def channels_first_with_padding(probabilities, padded_length: int):
-    """Convert canonical ``[batch, length, 4]`` soft input and right-pad it."""
-    if probabilities.ndim != 3 or probabilities.shape[-1] != 4:
-        raise ValueError("soft nucleotide input must have shape [batch, length, 4]")
-    if probabilities.shape[1] > padded_length:
-        raise ValueError(f"model accepts at most {padded_length} nucleotides")
-    channels_first = probabilities.transpose(1, 2)
-    return functional.pad(
-        channels_first,
-        (0, padded_length - probabilities.shape[1]),
-    )
-
-
 class RestoredTargetScale(nn.Module):
     """Restore standardized model predictions to their measured target scale."""
 
@@ -99,7 +85,7 @@ def task_matrix(values: torch.Tensor) -> torch.Tensor:
 
 
 class ScaledEnsemble(nn.Module):
-    """Average independently scaled members and return epistemic uncertainty."""
+    """Average independently scaled ensemble members."""
 
     def __init__(self, models, means, scales) -> None:
         super().__init__()
@@ -113,4 +99,4 @@ class ScaledEnsemble(nn.Module):
             value = task_matrix(model(inputs))
             predictions.append(value * self.scales[index] + self.means[index])
         stacked = torch.stack(predictions)
-        return stacked.mean(dim=0), stacked.std(dim=0, unbiased=False)
+        return stacked.mean(dim=0)

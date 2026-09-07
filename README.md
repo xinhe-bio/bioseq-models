@@ -1,114 +1,72 @@
-# Biosequence Models
+# bioseq-models
 
-`bioseq-models` packages the activity models reproduced in BioSeqBench: model
-architectures, trained checkpoints, sequence encoders, target-scale restoration,
-and a common loading API. Sequence-search algorithms remain in the separate
-[`bioseq-optimization`](https://github.com/UTR-CODE/bioseq-optimization)
-repository. The two packages communicate through the scorer interface defined
-by `bioseq-optimization`.
+`bioseq-models` provides ready-to-use biological sequence models with bundled
+checkpoints. Its only job is model loading and sequence prediction: pass DNA or
+RNA sequences to `score()` and receive a two-dimensional NumPy array.
 
-All default checkpoints are included in this package. Calling `load_model()`
-does not download a weight file at runtime.
+The package is self-contained and does not depend on a separate workflow or
+training package.
 
-## Installation
+## Install
 
-Install from GitHub with pip. The optimizer package is installed automatically:
+From GitHub:
 
 ```bash
-python -m pip install git+ssh://git@github.com/UTR-CODE/bioseq-models.git
+pip install "git+ssh://git@github.com/UTR-CODE/bioseq-models.git"
 ```
 
-For GPU execution, install the PyTorch build matching the machine's NVIDIA
-driver first; the command above will reuse it. Otherwise pip may select a newer
-CUDA runtime than an older server driver supports. CPU execution is unaffected.
-
-For an editable checkout:
+For development from a local clone:
 
 ```bash
-git clone git@github.com:UTR-CODE/bioseq-models.git
-cd bioseq-models
-python -m pip install -e .
+pip install -e ".[dev]"
 ```
 
-Alternatively, install the minimum dependencies from `requirements.txt`:
+PyTorch wheels must match the NVIDIA driver on GPU machines. Install the
+appropriate PyTorch build first if the default wheel is not compatible with
+your system. CPU prediction works with the regular installation.
 
-```bash
-python -m pip install -r requirements.txt
-```
-
-## Included sequence models
-
-The registry contains 16 ready-to-score model interfaces. Multiple checkpoints
-belonging to one cross-validation or weak-model ensemble are exposed as one
-model, rather than as unrelated epoch files.
-
-| Registry name | Biological input | Outputs | Status | Gradient |
-|---|---|---|---|---|
-| `optimus5prime` | 50-nt 5′ UTR | MRL | paper architecture | Yes |
-| `deepstarr` | 249-bp enhancer | developmental, housekeeping | paper architecture | Yes |
-| `dream_legnet` | 110-bp construct or 93-bp variable region | promoter activity | paper architecture | Yes |
-| `cetnar_stability` | RNA/DNA, up to 80 nt | decay rate, negative decay (`stability`) | benchmark surrogate | Yes |
-| `parm_k562` | up to 586 bp; adapters added internally | K562 log2RPM | paper architecture, 5 folds | Yes |
-| `agarwal_hepg2` | 230-bp element | HepG2 log2(RNA/DNA) | paper architecture, 10 folds | Yes |
-| `agarwal_k562` | 230-bp element | K562 log2(RNA/DNA) | paper architecture, 10 folds | Yes |
-| `agarwal_wtc11` | 230-bp element | WTC11 log2(RNA/DNA) | paper architecture, 10 folds | Yes |
-| `kosuri_composability` | promoter up to 75 nt + RBS up to 34 nt | log10 protein, log10 RNA | benchmark surrogate | Yes |
-| `zhao_ptrc` | Ptrc promoter, up to 76 nt | log10 fluorescence/OD600 | benchmark surrogate CNN | Yes |
-| `zhao_ptrc_xgboost` | Ptrc promoter, up to 76 nt | log10 fluorescence/OD600 | functional paper reproduction | No |
-| `zhou_l3_conditional` | 29 bp + L3 sublibrary | promoter activity | canonical benchmark surrogate | Yes |
-| `zhou_l3` | 29 bp | promoter activity | sequence-only diagnostic | Yes |
-| `tfbind8_weak` | 8 bp | binding score | lower-95% weak ensemble | Yes |
-| `utr5_weak` | 50-nt 5′ UTR | MRL | lower-95% weak ensemble | Yes |
-| `dream_weak` | yeast promoter, up to 142 bp | promoter activity | lower-95% weak ensemble | Yes |
-
-“Paper architecture” means that the reproduced architecture and training
-protocol follow the corresponding publication; the bundled weights are the
-BioSeqBench-trained checkpoints, not a claim that the authors released those
-exact weight files. See [MODEL_PROVENANCE.md](MODEL_PROVENANCE.md) for the
-selection and fidelity of every bundle.
-
-## Load and score sequences
+## Basic use
 
 ```python
-from bioseq_models import available_models, load_model, model_info
-
-print(available_models())
-print(model_info("optimus5prime"))
+from bioseq_models import load_model
 
 model = load_model("optimus5prime", device="cpu")
+
 sequences = [
-    "CCACTCGATTAACATGTTAACAACATACTCGTCCGGCCGATCAGCGGCTA",
-    "CAAATCATGTGCAGCCCTGGCGACCGTACTGCGGTACAAGAAAGTATAGT",
+    "AGGACGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGGGAGGCCG",
+    "CGTGAAGAGAGATTCCGCCCAGAGTGCAACCTCTACGCCAGGCGTCATCA",
 ]
 prediction = model.score(sequences)
-print(prediction.scores)
+
+print(type(prediction))       # <class 'numpy.ndarray'>
+print(prediction.shape)       # (2, 1)
+print(model.task_names)       # ('mrl',)
+print(prediction)
 ```
 
-`prediction.scores` has one row per sequence. A multi-task model has one column
-per output, in the same order as `model.task_names`. Ensembles also return
-between-member standard deviation in `prediction.uncertainties`.
+The output shape is always `(number_of_sequences, number_of_tasks)`. A
+single-task model therefore returns `(N, 1)`, not `(N,)`.
 
-For example, DeepSTARR returns two columns:
+Multi-task models use the same interface:
 
 ```python
 model = load_model("deepstarr", device="cpu")
-sequence = "ACGT" * 62 + "A"
-prediction = model.score([sequence])
+prediction = model.score(["ACGT" * 62 + "A"])
 
+print(prediction.shape)       # (1, 2)
 print(model.task_names)       # ('developmental', 'housekeeping')
-print(prediction.scores)      # shape: (1, 2)
+print(prediction[0, 0])       # developmental activity
+print(prediction[0, 1])       # housekeeping activity
 ```
 
-Aliases such as `optimus`, `dream`, `parm`, `kosuri`, and `tfbind8` are
-also accepted. Canonical names are returned by `available_models()`.
+## Sequence handling
 
-## Variable length, RNA, and N padding
+Inputs may be a Python string, a list of strings, or a one-dimensional NumPy
+array. Sequences are uppercased internally, and `U` is converted to `T`. The
+accepted alphabet is `A/C/G/T/N`; `N` is encoded as an all-zero position.
 
-Every public sequence interface accepts DNA notation. RNA `U` is converted to
-`T` internally. `N` is represented by an all-zero nucleotide vector and is
-never emitted as an optimization candidate.
-
-For a fixed-input model, set the tensor length and choose left or right padding:
+Models with bounded fixed input sizes can pad shorter biological sequences with
+`N` on either side:
 
 ```python
 model = load_model(
@@ -117,132 +75,97 @@ model = load_model(
     pad_to_length=50,
     padding_side="left",
 )
-
-prediction = model.score(["AUGGCUACGUAACCGGCUACGUAACCGGCUACGUAACCGG"])
+prediction = model.score(["AUGGCU" * 6])
 ```
 
-Models whose registry length is shown as “up to” already apply their canonical
-maximum length. Their `padding_side` can still be selected where it is
-biologically meaningful. Inputs longer than the model maximum raise an error
-instead of being silently truncated.
+Without `pad_to_length`, models such as Optimus require their exact native
+length. Models that are intrinsically variable length already configure their
+own maximum length and padding behavior.
 
-PARM is a special case: it adds the published `CAGTGAT` and `CACGACG` adapters
-before deterministic left or right zero/N padding to 600 positions:
+## Bundled models
+
+| Name | Input | Tasks |
+|---|---:|---|
+| `optimus5prime` | 50 nt | `mrl` |
+| `deepstarr` | 249 nt | `developmental`, `housekeeping` |
+| `dream_legnet` | 110 nt full construct | `promoter_activity` |
+| `cetnar_stability` | up to 80 nt | `decay_rate_k_fit` |
+| `parm_k562` | up to 586 nt before adapters | `log2rpm_k562` |
+| `agarwal_hepg2` | 230 nt | `log2_rna_dna` |
+| `agarwal_k562` | 230 nt | `log2_rna_dna` |
+| `agarwal_wtc11` | 230 nt | `log2_rna_dna` |
+| `kosuri_composability` | 75-nt promoter + 34-nt RBS slots | `log10_protein_expression`, `log10_rna_expression` |
+| `zhao_ptrc` | up to 76 nt | `log10_fluorescence_per_od600` |
+| `zhao_ptrc_xgboost` | up to 76 nt | `log10_fluorescence_per_od600` |
+| `zhou_l3_conditional` | 29 nt + sublibrary | `promoter_activity` |
+| `zhou_l3` | 29 nt | `promoter_activity` |
+| `tfbind8_weak` | 8 nt | `binding_score` |
+| `utr5_weak` | 50 nt | `mrl` |
+| `dream_weak` | up to 142 nt | `promoter_activity` |
+
+List and inspect models programmatically:
 
 ```python
-model = load_model("parm_k562", padding_side="right")
-prediction = model.score(["ACGTCGATGCTAGCTAGGCTA"])
+from bioseq_models import available_models, model_info
+
+print(available_models())
+print(model_info("deepstarr"))
 ```
 
-## Models with additional inputs
+### DREAM LegNet variable region
 
-Kosuri is a two-branch model. Use `score_pairs()` so promoter and RBS lengths
-remain unambiguous:
+The default DREAM LegNet interface accepts the complete 110-nt dataset
+construct and removes its 17-nt left adapter during preprocessing. To provide
+the 93-nt variable region directly:
 
 ```python
-model = load_model("kosuri_composability")
+model = load_model(
+    "dream_legnet",
+    device="cpu",
+    variable_region_only=True,
+)
+prediction = model.score(["ACGT" * 23 + "A"])
+```
+
+### Kosuri promoter/RBS pairs
+
+`score_pairs()` places variable-length promoter and RBS sequences into their
+canonical 75-nt and 34-nt slots:
+
+```python
+model = load_model("kosuri_composability", device="cpu")
 prediction = model.score_pairs(
     promoters=["GGCGCGCCATTAATCATCCGGAATG"],
     rbs_sequences=["ATCTTAATCTAGCGCGGGAGTATTTCATATG"],
 )
-
-print(model.task_names)
-print(prediction.scores)
+print(prediction.shape)       # (1, 2)
 ```
 
-The conditional Zhou L3 model requires a fixed source sublibrary for one
-optimization run:
+### Zhou L3 condition
+
+Choose one documented L3 source sublibrary when loading the conditional model:
 
 ```python
-model = load_model("zhou_l3_conditional", sublibrary="L3_s2")
-prediction = model.score(["ACGTCGATGCTAGCTAGGCTAACGTACGT"])
-```
-
-Valid choices are `L3_s1`, `L3_s2`, `L3_s3`, and `L3_s4`.
-
-## Gradient optimization with DREAM LegNet
-
-The canonical DREAM construct contains a 17-bp left adapter that is discarded
-by the published preprocessing. For scoring dataset rows, the default interface
-still accepts the complete 110-bp construct. For gradient optimization, use the
-93-bp variable-region interface so every optimized position affects activity:
-
-```python
-from bioseq_models import load_model
-from sequence_optimization import SequenceSpace, fast_seqprop_optimize
-
 model = load_model(
-    "dream_legnet",
-    variable_region_only=True,
+    "zhou_l3_conditional",
     device="cpu",
+    sublibrary="L3_s2",
 )
-
-result = fast_seqprop_optimize(
-    model,
-    SequenceSpace(length=93),
-    num_candidates=4,
-    budget=20,
-    seed=7,
-)
+prediction = model.score(["ACGTACGTACGTACGTACGTACGTACGTA"])
 ```
 
-The differentiable transform inserts the fixed 57-bp context, changes channel
-order from A/C/G/T to A/G/C/T, adds the constant fifth channel, and retains
-forward/reverse-complement averaging. Calling `score_soft()` on the default
-110-bp interface is also supported, but the first 17 positions correctly have
-zero gradient.
+Valid conditions are `L3_s1`, `L3_s2`, `L3_s3`, and `L3_s4`.
 
-## Cetnar paper LightGBM cascade
+## Reproducibility and testing
 
-The Cetnar paper-style model needs the full engineered feature table for five
-isoforms, not only a nucleotide sequence, so it is intentionally kept outside
-the raw-sequence registry:
+Model provenance, checkpoint selection, and fidelity notes are recorded in
+[`MODEL_PROVENANCE.md`](MODEL_PROVENANCE.md).
 
-```python
-import pandas as pd
-
-from bioseq_models.tabular import CetnarLightGBM
-
-features = pd.read_csv("cetnar_features.csv")
-model = CetnarLightGBM.from_checkpoint_dir()
-
-timepoint_predictions = model.predict_timepoints(features)
-decay_rate = model.predict(features)
-```
-
-Use `cetnar_stability` when the available input is only a sequence.
-
-## Optimize with `bioseq-optimization`
-
-Loaded sequence models can be passed directly to any compatible optimizer:
-
-```python
-from bioseq_models import load_model
-from sequence_optimization import SequenceSpace, genetic_algorithm_optimize
-
-model = load_model("optimus5prime", device="cpu")
-result = genetic_algorithm_optimize(
-    model,
-    SequenceSpace(length=50),
-    num_candidates=16,
-    budget=160,
-    seed=7,
-)
-
-print(result.sequences[:5])
-print(result.activities[:5])
-```
-
-[`examples/custom_cnn.py`](examples/custom_cnn.py) shows how to load a small
-custom PyTorch CNN, wrap it in the same scorer interface, and optimize it.
-
-## Verification
+Run the test suite after installation:
 
 ```bash
-python -m pytest -q
-python -m ruff check bioseq_models examples tests
+pytest
 ```
 
-The test suite loads every bundled model, checks task shapes and finite outputs,
-tests padding and special inputs, validates the Cetnar LightGBM cascade, and
-runs a model-to-optimizer integration test.
+The tests load every bundled model, check exact NumPy output shapes, verify RNA
+normalization and padding, and replay retained reference predictions.

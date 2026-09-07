@@ -1,4 +1,4 @@
-"""Checkpoint-backed biological activity models for bioseq-optimization."""
+"""Ready-to-use checkpoint-backed biological sequence models."""
 
 from .registry import ModelInfo, available_models, load_model, model_info
 

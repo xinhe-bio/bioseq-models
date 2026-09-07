@@ -7,9 +7,8 @@ from pathlib import Path
 import torch
 from torch import nn
 
-from sequence_optimization import DifferentiableTorchSequenceScorer
-
 from ..architectures import MPRALegNet
+from ..inference import TorchSequenceModel
 from .common import CHECKPOINT_DIR, encode_acgt_sequences, task_matrix
 
 
@@ -32,10 +31,10 @@ class _MPRATTAEnsemble(nn.Module):
             reverse_value = task_matrix(model(reverse))
             predictions.append((forward_value + reverse_value) / 2)
         stacked = torch.stack(predictions)
-        return stacked.mean(dim=0), stacked.std(dim=0, unbiased=False)
+        return stacked.mean(dim=0)
 
 
-class AgarwalMPRALegNet(DifferentiableTorchSequenceScorer):
+class AgarwalMPRALegNet(TorchSequenceModel):
     """Base adapter; use a cell-specific subclass from the registry."""
 
     cell_type = ""
@@ -45,9 +44,6 @@ class AgarwalMPRALegNet(DifferentiableTorchSequenceScorer):
         super().__init__(
             model,
             lambda values: encode_acgt_sequences(values, exact_length=230)[
-                :, [0, 2, 1, 3], :
-            ],
-            soft_input_transform=lambda values: values.transpose(1, 2)[
                 :, [0, 2, 1, 3], :
             ],
             **kwargs,

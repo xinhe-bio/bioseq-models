@@ -1,4 +1,4 @@
-"""Optimization-ready Cetnar sequence CNN-BiLSTM adapter."""
+"""Cetnar sequence CNN-BiLSTM adapter."""
 
 from __future__ import annotations
 
@@ -7,16 +7,15 @@ from pathlib import Path
 import torch
 from torch import nn
 
-from sequence_optimization import DifferentiableTorchSequenceScorer
-
 from ..architectures import CetnarStabilityCNNBiLSTM
+from ..inference import TorchSequenceModel
 from .common import CHECKPOINT_DIR, encode_acgt_last_channel
 
 
 DEFAULT_CHECKPOINT = CHECKPOINT_DIR / "cetnar_stability_cnn.pt"
 
 
-class _DecayAndStability(nn.Module):
+class _RestoredDecay(nn.Module):
     def __init__(self, model: nn.Module, mean: float, scale: float) -> None:
         super().__init__()
         self.model = model
@@ -27,14 +26,14 @@ class _DecayAndStability(nn.Module):
         mask = inputs.abs().sum(dim=-1) > 0
         standardized = self.model(inputs.transpose(1, 2), mask)
         decay = standardized * self.target_scale + self.target_mean
-        return torch.cat([decay, -decay], dim=1)
+        return decay
 
 
-class CetnarStability(DifferentiableTorchSequenceScorer):
-    """Return measured decay rate and its higher-is-better negative."""
+class CetnarStability(TorchSequenceModel):
+    """Predict the measured decay rate from nucleotide sequences."""
 
     def __init__(self, model: nn.Module, **kwargs) -> None:
-        kwargs.setdefault("task_names", ("decay_rate_k_fit", "stability"))
+        kwargs.setdefault("task_names", ("decay_rate_k_fit",))
         kwargs.setdefault("pad_to_length", 80)
         super().__init__(
             model,
@@ -54,7 +53,7 @@ class CetnarStability(DifferentiableTorchSequenceScorer):
         state = torch.load(path, map_location="cpu", weights_only=True)
         network = CetnarStabilityCNNBiLSTM()
         network.load_state_dict(state["model_state"])
-        model = _DecayAndStability(
+        model = _RestoredDecay(
             network,
             state["label_mean"],
             state["label_scale"],

@@ -1,6 +1,6 @@
 """Small sequence-only CNN for the Zhao 2022 Ptrc promoter library.
 
-This is a BioSeqBench differentiable comparator, not an architecture claimed by
+This is a BioSeqBench sequence-CNN comparator, not an architecture claimed by
 Zhao et al.  The original paper selected a gradient-boosted tree predictor.
 """
 

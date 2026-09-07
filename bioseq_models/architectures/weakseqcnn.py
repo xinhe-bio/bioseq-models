@@ -78,7 +78,7 @@ class ResidualDilatedBlock(nn.Module):
 
 
 class WeakSeqCNN(nn.Module):
-    """Differentiable 194,882-parameter WeakSeqCNN-v1 regressor."""
+    """194,882-parameter WeakSeqCNN-v1 regressor."""
 
     def __init__(
         self,
