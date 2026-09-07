@@ -18,9 +18,10 @@ Pretrained weights consumed by the
 The package downloads only the files required by the model selected by the
 user.
 
-The repository contains weights for Optimus 5-Prime, DeepSTARR, Malinois,
-DREAM LegNet, Cetnar stability, PARM K562, Agarwal lentiMPRA, UTR-CODE, and the
-multi-species CDS stability model with CodonBERT.
+The repository contains weights for Optimus 5-Prime, DeepSTARR,
+DeepSTARR-Mouse, DeepSTARR-Embryo, Malinois, DREAM LegNet, Cetnar stability,
+PARM K562, Agarwal lentiMPRA, UTR-CODE, and the multi-species CDS stability
+model with CodonBERT.
 
 Most checkpoints are project-trained reproductions and are not represented as
 author-released weights. See the package's `MODEL_PROVENANCE.md` for details.

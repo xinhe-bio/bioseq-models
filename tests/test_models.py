@@ -8,6 +8,9 @@ from bioseq_models import resources
 MODEL_CASES = [
     ("optimus5prime", "A" * 50, 1, {}),
     ("deepstarr", "A" * 249, 2, {}),
+    ("deepstarr_mouse_heart_activity", "A" * 1001, 1, {}),
+    ("deepstarr_mouse_heart_accessibility", "A" * 1001, 1, {}),
+    ("deepstarr_embryo_brain_vnc_activity", "A" * 1001, 1, {}),
     ("malinois", "A" * 200, 3, {}),
     ("dream_legnet", "A" * 110, 1, {}),
     ("cetnar_stability", "A" * 60, 1, {}),
@@ -48,6 +51,11 @@ def test_registry_and_aliases():
     assert available_models() == tuple(case[0] for case in MODEL_CASES)
     assert model_info("optimus").name == "optimus5prime"
     assert model_info("dream").sequence_length == 110
+    assert model_info("deepstarr_mouse").name == "deepstarr_mouse_heart_activity"
+    assert (
+        model_info("deepstarr_embryo").name
+        == "deepstarr_embryo_brain_vnc_activity"
+    )
     assert model_info("dream_legnet").task_names == ("promoter_activity",)
     assert model_info("utrcode").name == "utr_code"
     assert model_info("mrna_stability").name == "cds_stability"
@@ -61,6 +69,11 @@ def test_registry_and_aliases():
         "agarwal_wtc11",
     }
     assert available_models(status="official_checkpoint") == ("malinois",)
+    assert set(available_models(status="converted_official_checkpoint")) == {
+        "deepstarr_mouse_heart_activity",
+        "deepstarr_mouse_heart_accessibility",
+        "deepstarr_embryo_brain_vnc_activity",
+    }
 
 
 @pytest.mark.parametrize("padding_side", ["left", "right"])
@@ -106,6 +119,19 @@ def test_malinois_official_checkpoint_replays_retained_prediction():
         rtol=0,
         atol=1e-5,
     )
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("deepstarr_mouse_heart_activity", 0.0292502511292696),
+        ("deepstarr_mouse_heart_accessibility", 0.5248709917068481),
+        ("deepstarr_embryo_brain_vnc_activity", 0.22433896362781525),
+    ],
+)
+def test_tissue_deepstarr_checkpoints_replay_retained_predictions(name, expected):
+    prediction = load_model(name, device="cpu").score(["A" * 1001])
+    np.testing.assert_allclose(prediction[0, 0], expected, rtol=0, atol=2e-6)
 
 
 def test_dream_legnet_full_and_variable_region_inputs_match():
@@ -170,4 +196,4 @@ def test_hugging_face_download_is_scoped_to_one_model(monkeypatch, tmp_path):
         "utr_code/HEK293T.txt",
     ]
     assert all(call["repo_id"] == "xinHesysu/bioseq-models" for call in calls)
-    assert all(call["revision"] == "v0.6.0" for call in calls)
+    assert all(call["revision"] == "v0.7.0" for call in calls)

@@ -9,11 +9,20 @@ from huggingface_hub import hf_hub_download
 
 
 HF_REPO_ID = "xinHesysu/bioseq-models"
-HF_REVISION = "v0.6.0"
+HF_REVISION = "v0.7.0"
 
 MODEL_FILES = {
     "optimus5prime": ("checkpoints/optimus5prime.pt",),
     "deepstarr": ("checkpoints/deepstarr.pt",),
+    "deepstarr_mouse_heart_activity": (
+        "checkpoints/deepstarr_mouse_heart_activity_fold01_rep1.pt",
+    ),
+    "deepstarr_mouse_heart_accessibility": (
+        "checkpoints/deepstarr_mouse_heart_accessibility_fold01_rep1.pt",
+    ),
+    "deepstarr_embryo_brain_vnc_activity": (
+        "checkpoints/deepstarr_embryo_brain_vnc_activity_fold01_rep1.pt",
+    ),
     "malinois": ("checkpoints/malinois.pt",),
     "dream_legnet": ("checkpoints/dream_legnet.pt",),
     "cetnar_stability": ("checkpoints/cetnar_stability_cnn.pt",),

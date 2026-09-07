@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bioseq-models"
-version = "0.6.0"
+version = "0.7.0"
 description = "Ready-to-use checkpoint-backed biological sequence models"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -20,6 +20,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+conversion = ["h5py>=3"]
 dev = ["pytest>=7.4", "ruff>=0.8"]
 
 [project.urls]

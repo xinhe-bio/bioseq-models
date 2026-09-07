@@ -29,6 +29,32 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+## DeepSTARR-Mouse
+
+The converted checkpoints originate from the official DeepSTARR-Mouse source
+and model repositories:
+
+- https://github.com/Shenzhi-Chen/DeepSTARR-Mouse
+- https://huggingface.co/Shenzhi-Chen/DeepSTARR-Mouse
+
+The source repository and Hugging Face metadata declare the MIT License,
+Copyright (c) 2025 Shenzhi Chen. The MIT terms reproduced above apply. The
+Hugging Face model-card body separately states Apache License 2.0 for the model
+and code; that license is available at
+https://www.apache.org/licenses/LICENSE-2.0. Users should review the upstream
+record because these two upstream declarations are inconsistent.
+
+## DeepSTARR-Embryo
+
+The converted brain/VNC activity checkpoint originates from the model archive
+by Bernardo Almeida and Alexander Stark:
+
+- https://github.com/bernardo-de-almeida/DeepSTARR_embryo
+- https://doi.org/10.5281/zenodo.8011696
+
+The Zenodo record declares Creative Commons Attribution 4.0 International
+(CC BY 4.0): https://creativecommons.org/licenses/by/4.0/
+
 ## CodonBERT
 
 The files under `cds_stability/codonbert/` contain the CodonBERT model artifact

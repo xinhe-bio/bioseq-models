@@ -4,6 +4,11 @@ from .agarwal import MPRALegNet
 from .cetnar import CetnarStabilityCNNBiLSTM
 from .cds_stability import CDSStabilityNetwork
 from .deepstarr import DeepSTARRPaper
+from .deepstarr_tissue import (
+    DeepSTARREmbryoNetwork,
+    DeepSTARRMouseNetwork,
+    DeepSTARRTissueNetwork,
+)
 from .dream_legnet import LegNetAutosome
 from .malinois import MalinoisNetwork
 from .optimus5prime import Optimus5Prime
@@ -15,6 +20,9 @@ __all__ = [
     "CetnarStabilityCNNBiLSTM",
     "CDSStabilityNetwork",
     "DeepSTARRPaper",
+    "DeepSTARREmbryoNetwork",
+    "DeepSTARRMouseNetwork",
+    "DeepSTARRTissueNetwork",
     "LegNetAutosome",
     "MalinoisNetwork",
     "Optimus5Prime",

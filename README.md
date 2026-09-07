@@ -11,7 +11,7 @@ pip install "git+https://github.com/UTR-CODE/bioseq-models.git"
 Only the files required by the selected model are downloaded from Hugging Face
 on first use and cached locally. The weights are hosted in the
 [`xinHesysu/bioseq-models`](https://huggingface.co/xinHesysu/bioseq-models)
-model repository and pinned to the `v0.6.0` revision.
+model repository and pinned to the `v0.7.0` revision.
 
 ## Basic use
 
@@ -42,6 +42,29 @@ download_model("optimus5prime")
 ```
 
 This downloads one Optimus checkpoint, not the complete model collection.
+
+## Tissue-specific DeepSTARR
+
+The converted DeepSTARR-Mouse and DeepSTARR-Embryo models accept 1,001-nt
+sequences. Activity models return probabilities; the accessibility model has a
+linear output.
+
+```python
+from bioseq_models import load_model
+
+sequence = "ACGT" * 250 + "A"
+
+mouse = load_model("deepstarr_mouse", device="cpu")
+mouse_activity = mouse.score([sequence])
+
+embryo = load_model("deepstarr_embryo", device="cpu")
+embryo_activity = embryo.score([sequence])
+```
+
+The short aliases select the available activity checkpoints: mouse heart and
+Drosophila brain/VNC, respectively. Use
+`deepstarr_mouse_heart_accessibility` for the mouse accessibility checkpoint.
+All three resources use the selected official fold 01, replicate 1 checkpoint.
 
 ## Malinois
 
@@ -126,6 +149,9 @@ normalized model score, not a half-life measured in hours.
 | `utr_code` | up to 1000-nt 5′UTR, 4500-nt CDS, or 4000-nt 3′UTR | `log1p_rpf_rpkm_x5` |
 | `cds_stability` | complete CDS up to 9000 nt | `stability_score` |
 | `deepstarr` | 249 nt | `developmental`, `housekeeping` |
+| `deepstarr_mouse_heart_activity` | 1,001 nt | `heart_activity_probability` |
+| `deepstarr_mouse_heart_accessibility` | 1,001 nt | `heart_accessibility` |
+| `deepstarr_embryo_brain_vnc_activity` | 1,001 nt | `brain_vnc_activity_probability` |
 | `malinois` | 200-nt enhancer | `K562_log2FC`, `HepG2_log2FC`, `SKNSH_log2FC` |
 | `dream_legnet` | 110-nt construct or 93-nt variable region | `promoter_activity` |
 | `cetnar_stability` | up to 80 nt | `decay_rate_k_fit` |
