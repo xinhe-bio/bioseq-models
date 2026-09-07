@@ -97,24 +97,6 @@ class SequenceModel:
         )
 
 
-class CallableSequenceModel(SequenceModel):
-    """Wrap a NumPy-compatible prediction callable."""
-
-    def __init__(self, function: Callable[[np.ndarray], Any], **kwargs) -> None:
-        super().__init__(**kwargs)
-        self.function = function
-
-    def score(self, sequences) -> np.ndarray:
-        values = self._prepare(sequences)
-        if not len(values):
-            return np.empty((0, len(self.task_names)), dtype=np.float64)
-        return _prediction_matrix(
-            self.function(values),
-            len(values),
-            len(self.task_names),
-        )
-
-
 class TorchSequenceModel(SequenceModel):
     """Run a frozen PyTorch model on batches of encoded nucleotide strings."""
 
