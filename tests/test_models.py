@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
 
-from bioseq_models import available_models, load_model, model_info
+from bioseq_models import available_models, download_model, load_model, model_info
+from bioseq_models import resources
 
 
 MODEL_CASES = [
@@ -139,3 +140,21 @@ def test_cds_stability_validates_complete_codon_input():
         model.score(["ATGA"])
     with pytest.raises(ValueError, match="contains N"):
         model.score(["ATGNNNTAA"])
+
+
+def test_hugging_face_download_is_scoped_to_one_model(monkeypatch, tmp_path):
+    calls = []
+
+    def fake_download(**kwargs):
+        calls.append(kwargs)
+        return tmp_path / kwargs["filename"]
+
+    monkeypatch.setattr(resources, "hf_hub_download", fake_download)
+    downloaded = download_model("utr_code", cache_dir=tmp_path)
+
+    assert len(downloaded) == 2
+    assert [call["filename"] for call in calls] == [
+        "utr_code/best.epoch",
+        "utr_code/HEK293T.txt",
+    ]
+    assert all(call["repo_id"] == "UTR-CODE/bioseq-models" for call in calls)

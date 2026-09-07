@@ -1,126 +1,104 @@
-"""Download and resolve the versioned bioseq-models weight bundle."""
+"""Resolve model files locally or download only the requested Hugging Face files."""
 
 from __future__ import annotations
 
 import os
-import hashlib
-import json
-import shutil
-import urllib.request
-import zipfile
 from pathlib import Path
 
-
-BUNDLE_VERSION = "0.5.0"
-BUNDLE_FILENAME = f"bioseq-models-weights-v{BUNDLE_VERSION}.zip"
-# Filled after the bundle is deposited. BIOSEQ_MODELS_WEIGHTS_URL can be used
-# before then, and remains useful for mirrors.
-ZENODO_URL: str | None = None
+from huggingface_hub import hf_hub_download
 
 
-def _digest(path: Path) -> str:
-    value = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(8 * 1024 * 1024), b""):
-            value.update(block)
-    return value.hexdigest()
+HF_REPO_ID = "UTR-CODE/bioseq-models"
+HF_REVISION = "main"
 
-
-def _verify(directory: Path) -> None:
-    manifest_path = directory / "weights_manifest.json"
-    if not manifest_path.is_file():
-        raise ValueError("weight bundle does not contain weights_manifest.json")
-    manifest = json.loads(manifest_path.read_text())
-    if manifest.get("bundle_version") != BUNDLE_VERSION:
-        raise ValueError(
-            f"weight bundle version is {manifest.get('bundle_version')!r}; "
-            f"expected {BUNDLE_VERSION!r}"
+MODEL_FILES = {
+    "optimus5prime": ("checkpoints/optimus5prime.pt",),
+    "deepstarr": ("checkpoints/deepstarr.pt",),
+    "dream_legnet": ("checkpoints/dream_legnet.pt",),
+    "cetnar_stability": ("checkpoints/cetnar_stability_cnn.pt",),
+    "utr_code": ("utr_code/best.epoch", "utr_code/HEK293T.txt"),
+    "cds_stability": (
+        "cds_stability/best_model.pt",
+        "cds_stability/codonbert/config.json",
+        "cds_stability/codonbert/pytorch_model.bin",
+    ),
+    "parm_k562": tuple(
+        f"checkpoints/parm_k562_fold{fold}.pt" for fold in range(5)
+    ),
+    **{
+        f"agarwal_{cell_type}": tuple(
+            f"checkpoints/agarwal_{cell_type}_fold{fold}.pt"
+            for fold in range(1, 11)
         )
-    for relative, expected in manifest.get("files", {}).items():
-        path = directory / relative
-        if not path.is_file() or path.stat().st_size != expected["bytes"]:
-            raise ValueError(f"weight resource is missing or incomplete: {relative}")
-        if _digest(path) != expected["sha256"]:
-            raise ValueError(f"weight resource failed integrity check: {relative}")
+        for cell_type in ("hepg2", "k562", "wtc11")
+    },
+}
 
 
-def _default_cache_root() -> Path:
-    if value := os.environ.get("BIOSEQ_MODELS_CACHE"):
-        return Path(value).expanduser()
-    if value := os.environ.get("XDG_CACHE_HOME"):
-        return Path(value).expanduser() / "bioseq-models"
-    return Path.home() / ".cache" / "bioseq-models"
-
-
-def weights_dir(path: str | Path | None = None, *, download: bool = True) -> Path:
-    """Return the extracted weight directory, downloading it when necessary."""
-    explicit = path or os.environ.get("BIOSEQ_MODELS_WEIGHTS_DIR")
-    if explicit:
-        directory = Path(explicit).expanduser()
-        if not directory.is_dir():
-            raise FileNotFoundError(f"weight directory not found: {directory}")
-        return directory
-
-    directory = _default_cache_root() / BUNDLE_VERSION
-    if (directory / ".complete").is_file():
-        return directory
-    if not download:
-        raise FileNotFoundError(f"weight bundle is not cached at {directory}")
-    return download_weights(cache_dir=directory)
+def _local_weights_dir(path: str | Path | None = None) -> Path | None:
+    value = path or os.environ.get("BIOSEQ_MODELS_WEIGHTS_DIR")
+    if value is None:
+        return None
+    directory = Path(value).expanduser()
+    if not directory.is_dir():
+        raise FileNotFoundError(f"weight directory not found: {directory}")
+    return directory
 
 
 def weight_path(relative_path: str, path: str | Path | None = None) -> Path:
-    """Resolve one file from the extracted, versioned weight bundle."""
-    directory = weights_dir(path)
-    resolved = directory / relative_path
-    if not resolved.is_file():
-        raise FileNotFoundError(
-            f"weight resource {relative_path!r} is missing from {directory}"
-        )
-    return resolved
+    """Resolve one resource, downloading that file only when it is not local."""
+    if directory := _local_weights_dir(path):
+        resolved = directory / relative_path
+        if not resolved.is_file():
+            raise FileNotFoundError(
+                f"weight resource {relative_path!r} is missing from {directory}"
+            )
+        return resolved
 
-
-def download_weights(
-    *,
-    url: str | None = None,
-    cache_dir: str | Path | None = None,
-    force: bool = False,
-) -> Path:
-    """Download and safely extract the complete Zenodo weight bundle."""
-    source = url or os.environ.get("BIOSEQ_MODELS_WEIGHTS_URL") or ZENODO_URL
-    if not source:
-        raise RuntimeError(
-            "The Zenodo weight bundle has not been published yet. Set "
-            "BIOSEQ_MODELS_WEIGHTS_DIR to an extracted bundle or "
-            "BIOSEQ_MODELS_WEIGHTS_URL to the uploaded ZIP URL."
-        )
-
-    destination = Path(cache_dir) if cache_dir else _default_cache_root() / BUNDLE_VERSION
-    destination = destination.expanduser()
-    marker = destination / ".complete"
-    if marker.is_file() and not force:
-        return destination
-
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    archive = destination.parent / f".{BUNDLE_FILENAME}.{os.getpid()}.download"
-    temporary = destination.parent / f".{destination.name}.{os.getpid()}.extract"
+    repo_id = os.environ.get("BIOSEQ_MODELS_HF_REPO_ID", HF_REPO_ID)
+    revision = os.environ.get("BIOSEQ_MODELS_HF_REVISION", HF_REVISION)
+    cache_dir = os.environ.get("BIOSEQ_MODELS_CACHE")
     try:
-        with urllib.request.urlopen(source) as response, archive.open("wb") as handle:
-            shutil.copyfileobj(response, handle)
-        with zipfile.ZipFile(archive) as bundle:
-            root = temporary.resolve()
-            for member in bundle.infolist():
-                target = (temporary / member.filename).resolve()
-                if root != target and root not in target.parents:
-                    raise ValueError(f"unsafe path in weight bundle: {member.filename}")
-            bundle.extractall(temporary)
-        _verify(temporary)
-        (temporary / ".complete").write_text(BUNDLE_VERSION + "\n")
-        if destination.exists():
-            shutil.rmtree(destination)
-        temporary.replace(destination)
-    finally:
-        archive.unlink(missing_ok=True)
-        if temporary.exists():
-            shutil.rmtree(temporary)
-    return destination
+        downloaded = hf_hub_download(
+            repo_id=repo_id,
+            filename=relative_path,
+            revision=revision,
+            cache_dir=cache_dir,
+        )
+    except Exception as exc:
+        raise RuntimeError(
+            f"could not download {relative_path!r} from Hugging Face repository "
+            f"{repo_id!r} at revision {revision!r}; set "
+            "BIOSEQ_MODELS_WEIGHTS_DIR to use local files"
+        ) from exc
+    return Path(downloaded)
+
+
+def download_model(
+    name: str,
+    *,
+    cache_dir: str | Path | None = None,
+    repo_id: str | None = None,
+    revision: str | None = None,
+) -> tuple[Path, ...]:
+    """Pre-download exactly the files required by one registered model."""
+    from .registry import model_info
+
+    canonical = model_info(name).name
+    files = MODEL_FILES[canonical]
+    selected_repo = repo_id or os.environ.get("BIOSEQ_MODELS_HF_REPO_ID", HF_REPO_ID)
+    selected_revision = revision or os.environ.get(
+        "BIOSEQ_MODELS_HF_REVISION", HF_REVISION
+    )
+    selected_cache = cache_dir or os.environ.get("BIOSEQ_MODELS_CACHE")
+    return tuple(
+        Path(
+            hf_hub_download(
+                repo_id=selected_repo,
+                filename=filename,
+                revision=selected_revision,
+                cache_dir=selected_cache,
+            )
+        )
+        for filename in files
+    )

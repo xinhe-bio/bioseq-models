@@ -8,7 +8,8 @@ Load biological sequence models by name and obtain predictions as NumPy arrays.
 pip install "git+https://github.com/UTR-CODE/bioseq-models.git"
 ```
 
-Model weights are downloaded from Zenodo on first use and cached locally.
+Only the files required by the selected model are downloaded from Hugging Face
+on first use and cached locally.
 
 ## Basic use
 
@@ -29,6 +30,16 @@ print(prediction.shape)  # (2, 1)
 
 `score()` returns a NumPy array with shape `(number_of_sequences,
 number_of_tasks)`. RNA `U` is converted to DNA `T` internally.
+
+To download a model before running inference:
+
+```python
+from bioseq_models import download_model
+
+download_model("optimus5prime")
+```
+
+This downloads one Optimus checkpoint, not the complete model collection.
 
 ## UTR-CODE
 

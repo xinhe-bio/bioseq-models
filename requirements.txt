@@ -2,6 +2,7 @@ numpy>=1.24,<3
 packaging>=23
 torch>=2.1
 einops>=0.7
+huggingface-hub>=0.28,<2
 tensorly>=0.8
 tensorly-torch>=0.5
 transformers>=4.35,<5

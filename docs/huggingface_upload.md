@@ -1,0 +1,30 @@
+# Publishing weights on Hugging Face
+
+Create a public **Model** repository named `UTR-CODE/bioseq-models` and select
+`Other` as its license. The repository model card contains the applicable
+CodonBERT artifact-license metadata and notice.
+
+Prepare the upload tree:
+
+```bash
+python scripts/prepare_huggingface_repo.py \
+  --source /mnt/data/home/hexin/bioseq-models-weight-cache/0.5.0 \
+  --output /mnt/data/home/hexin/bioseq-models-huggingface-v0.5.0
+```
+
+Install the Hugging Face CLI, log in with a write token, and upload the tree:
+
+```bash
+pip install -U huggingface_hub
+hf auth login
+HF_XET_HIGH_PERFORMANCE=1 hf upload \
+  UTR-CODE/bioseq-models \
+  /mnt/data/home/hexin/bioseq-models-huggingface-v0.5.0 \
+  . \
+  --repo-type model
+```
+
+The upload command handles large files automatically and can be run again if
+an interrupted upload needs to resume. After uploading, create the `v0.5.0`
+tag and update `HF_REVISION` in `bioseq_models/resources.py` to that immutable
+revision.

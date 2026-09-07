@@ -1,7 +1,8 @@
 # Model provenance
 
 The checkpoints were selected from the BioSeqBench reproductions and UTR-CODE
-projects. They are distributed together in the versioned Zenodo weight bundle.
+projects. They are distributed as individually downloadable files in the
+versioned Hugging Face model repository.
 
 | Model | Bundled checkpoint | Notes |
 |---|---|---|
