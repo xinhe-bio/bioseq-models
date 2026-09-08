@@ -7,6 +7,8 @@ from importlib import import_module
 from pathlib import Path
 from typing import Any
 
+from .deepstarr_embryo import checkpoint_files as _embryo_checkpoint_files
+
 
 @dataclass(frozen=True)
 class ModelInfo:
@@ -27,6 +29,23 @@ _DEEPSTARR_MOUSE_TISSUES = (
     ("forebrain", "Forebrain"),
     ("hindbrain", "Hindbrain"),
     ("neural_tube", "NeuralTube"),
+)
+
+_DEEPSTARR_EMBRYO_ACCESSIBILITY_TISSUES = (
+    ("brain", "Brain"),
+    ("cns", "CNS"),
+    ("epidermis", "Epidermis"),
+    ("midgut", "Midgut"),
+    ("somatic_muscle", "SomaticMuscle"),
+    ("visceral_muscle", "VisceralMuscle"),
+)
+
+_DEEPSTARR_EMBRYO_ACTIVITY_TISSUES = (
+    ("brain_vnc", "BrainVNC"),
+    ("muscle", "Muscle"),
+    ("epidermis", "Epidermis"),
+    ("gut", "Gut"),
+    ("brain_specific", "BrainSpecific"),
 )
 
 
@@ -55,6 +74,28 @@ def _deepstarr_mouse_info(tissue: str, class_tissue: str, kind: str) -> ModelInf
     )
 
 
+def _deepstarr_embryo_info(
+    tissue: str, class_tissue: str, kind: str
+) -> ModelInfo:
+    canonical = f"deepstarr_embryo_{tissue}_{kind}"
+    task = f"{tissue}_{'activity_probability' if kind == 'activity' else kind}"
+    aliases: tuple[str, ...] = ()
+    if tissue == "brain_vnc" and kind == "activity":
+        aliases = ("deepstarr_embryo", "deepstarr_embryo_brain_vnc")
+    elif tissue == "brain_specific" and kind == "activity":
+        aliases = ("deepstarr_embryo_brain_specific",)
+    return ModelInfo(
+        canonical,
+        1001,
+        (task,),
+        f"DeepSTARR-Embryo {tissue.replace('_', ' ')} {kind}, "
+        f"{len(_embryo_checkpoint_files(tissue, kind))}-checkpoint ensemble",
+        f"bioseq_models.adapters.deepstarr_tissue:DeepSTARREmbryo{class_tissue}{kind.title()}",
+        aliases,
+        status="converted_official_checkpoint",
+    )
+
+
 _MODELS = (
     ModelInfo(
         "optimus5prime",
@@ -78,14 +119,13 @@ _MODELS = (
         for tissue, class_tissue in _DEEPSTARR_MOUSE_TISSUES
         for kind in ("activity", "accessibility")
     ),
-    ModelInfo(
-        "deepstarr_embryo_brain_vnc_activity",
-        1001,
-        ("brain_vnc_activity_probability",),
-        "DeepSTARR-Embryo brain/VNC activity, fold 01 replicate 1",
-        "bioseq_models.adapters.deepstarr_tissue:DeepSTARREmbryoBrainVNCActivity",
-        ("deepstarr_embryo", "deepstarr_embryo_brain_vnc"),
-        status="converted_official_checkpoint",
+    *(
+        _deepstarr_embryo_info(tissue, class_tissue, "accessibility")
+        for tissue, class_tissue in _DEEPSTARR_EMBRYO_ACCESSIBILITY_TISSUES
+    ),
+    *(
+        _deepstarr_embryo_info(tissue, class_tissue, "activity")
+        for tissue, class_tissue in _DEEPSTARR_EMBRYO_ACTIVITY_TISSUES
     ),
     ModelInfo(
         "malinois",

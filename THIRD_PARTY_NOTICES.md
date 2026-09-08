@@ -46,8 +46,8 @@ record because these two upstream declarations are inconsistent.
 
 ## DeepSTARR-Embryo
 
-The converted brain/VNC activity checkpoint originates from the model archive
-by Bernardo Almeida and Alexander Stark:
+The converted tissue accessibility and activity checkpoints originate from the
+model archive by Bernardo Almeida and Alexander Stark:
 
 - https://github.com/bernardo-de-almeida/DeepSTARR_embryo
 - https://doi.org/10.5281/zenodo.8011696

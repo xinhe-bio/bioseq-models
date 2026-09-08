@@ -58,7 +58,9 @@ def _infer_output_kind(config: dict[str, Any]) -> str:
     )
 
 
-def _datasets(path: Path) -> dict[tuple[str, str], np.ndarray]:
+def _datasets(
+    path: Path, layer_names: set[str]
+) -> dict[tuple[str, str], np.ndarray]:
     try:
         import h5py
     except ImportError as exc:
@@ -75,7 +77,10 @@ def _datasets(path: Path) -> dict[tuple[str, str], np.ndarray]:
             parts = name.split("/")
             if len(parts) < 2 or ":" not in parts[-1]:
                 return
-            key = (parts[-2], parts[-1].split(":", maxsplit=1)[0])
+            matching_layers = {part for part in parts[:-1] if part in layer_names}
+            if len(matching_layers) != 1:
+                return
+            key = (matching_layers.pop(), parts[-1].split(":", maxsplit=1)[0])
             if key in values:
                 raise ValueError(f"ambiguous Keras tensor {key!r} in {path}")
             values[key] = np.asarray(item)
@@ -111,7 +116,6 @@ def convert_deepstarr_checkpoint(
         "embryo": DeepSTARREmbryoNetwork,
     }[architecture]
     model = model_class(output_kind=output_kind)
-    values = _datasets(keras_weights)
 
     conv_names = _layer_names(config, "Conv1D")
     batch_norm_names = _layer_names(config, "BatchNormalization")
@@ -122,6 +126,10 @@ def convert_deepstarr_checkpoint(
             f"6 BatchNormalization and 3 Dense layers, got "
             f"{len(conv_names)}, {len(batch_norm_names)}, {len(dense_names)}"
         )
+    values = _datasets(
+        keras_weights,
+        set(conv_names) | set(batch_norm_names) | set(dense_names),
+    )
 
     state = model.state_dict()
     for index, layer_name in enumerate(conv_names):
@@ -152,6 +160,12 @@ def convert_deepstarr_checkpoint(
             values, keras_name, "kernel"
         ).transpose(0, 1)
         state[f"{pytorch_name}.bias"] = _tensor(values, keras_name, "bias")
+
+    nonfinite = [name for name, value in state.items() if not torch.isfinite(value).all()]
+    if nonfinite:
+        raise ValueError(
+            f"Keras checkpoint contains non-finite parameters: {', '.join(nonfinite)}"
+        )
 
     model.load_state_dict(state, strict=True)
     output.parent.mkdir(parents=True, exist_ok=True)

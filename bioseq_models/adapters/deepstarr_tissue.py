@@ -8,6 +8,7 @@ import torch
 from torch import nn
 
 from ..architectures import DeepSTARREmbryoNetwork, DeepSTARRMouseNetwork
+from ..deepstarr_embryo import checkpoint_files as _embryo_checkpoint_files
 from ..inference import TorchSequenceModel
 from ..resources import weight_path
 from .common import encode_acgt_sequences
@@ -74,7 +75,7 @@ class _DeepSTARRTissueModel(TorchSequenceModel):
 
 
 class _MeanEnsemble(nn.Module):
-    """Average predictions from the six official folds and replicates."""
+    """Average predictions from the selected official folds and replicates."""
 
     def __init__(self, models) -> None:
         super().__init__()
@@ -179,12 +180,82 @@ class DeepSTARRMouseNeuralTubeAccessibility(_DeepSTARRMouseModel):
     checkpoint_files = _mouse_checkpoint_files(tissue, output_kind)
 
 
-class DeepSTARREmbryoBrainVNCActivity(_DeepSTARRTissueModel):
+class _DeepSTARREmbryoModel(_DeepSTARRTissueModel):
     architecture = "embryo"
-    output_kind = "activity"
-    checkpoint_file = "checkpoints/deepstarr_embryo_brain_vnc_activity_fold01_rep1.pt"
     network_class = DeepSTARREmbryoNetwork
+    tissue: str
 
     def __init__(self, model=None, **kwargs):
-        kwargs.setdefault("task_names", ("brain_vnc_activity_probability",))
+        suffix = (
+            "activity_probability"
+            if self.output_kind == "activity"
+            else "accessibility"
+        )
+        kwargs.setdefault("task_names", (f"{self.tissue}_{suffix}",))
         super().__init__(model=model, **kwargs)
+
+
+class DeepSTARREmbryoBrainAccessibility(_DeepSTARREmbryoModel):
+    tissue = "brain"
+    output_kind = "accessibility"
+    checkpoint_files = _embryo_checkpoint_files(tissue, output_kind)
+
+
+class DeepSTARREmbryoCNSAccessibility(_DeepSTARREmbryoModel):
+    tissue = "cns"
+    output_kind = "accessibility"
+    checkpoint_files = _embryo_checkpoint_files(tissue, output_kind)
+
+
+class DeepSTARREmbryoEpidermisAccessibility(_DeepSTARREmbryoModel):
+    tissue = "epidermis"
+    output_kind = "accessibility"
+    checkpoint_files = _embryo_checkpoint_files(tissue, output_kind)
+
+
+class DeepSTARREmbryoMidgutAccessibility(_DeepSTARREmbryoModel):
+    tissue = "midgut"
+    output_kind = "accessibility"
+    checkpoint_files = _embryo_checkpoint_files(tissue, output_kind)
+
+
+class DeepSTARREmbryoSomaticMuscleAccessibility(_DeepSTARREmbryoModel):
+    tissue = "somatic_muscle"
+    output_kind = "accessibility"
+    checkpoint_files = _embryo_checkpoint_files(tissue, output_kind)
+
+
+class DeepSTARREmbryoVisceralMuscleAccessibility(_DeepSTARREmbryoModel):
+    tissue = "visceral_muscle"
+    output_kind = "accessibility"
+    checkpoint_files = _embryo_checkpoint_files(tissue, output_kind)
+
+
+class DeepSTARREmbryoBrainVNCActivity(_DeepSTARREmbryoModel):
+    tissue = "brain_vnc"
+    output_kind = "activity"
+    checkpoint_files = _embryo_checkpoint_files(tissue, output_kind)
+
+
+class DeepSTARREmbryoMuscleActivity(_DeepSTARREmbryoModel):
+    tissue = "muscle"
+    output_kind = "activity"
+    checkpoint_files = _embryo_checkpoint_files(tissue, output_kind)
+
+
+class DeepSTARREmbryoEpidermisActivity(_DeepSTARREmbryoModel):
+    tissue = "epidermis"
+    output_kind = "activity"
+    checkpoint_files = _embryo_checkpoint_files(tissue, output_kind)
+
+
+class DeepSTARREmbryoGutActivity(_DeepSTARREmbryoModel):
+    tissue = "gut"
+    output_kind = "activity"
+    checkpoint_files = _embryo_checkpoint_files(tissue, output_kind)
+
+
+class DeepSTARREmbryoBrainSpecificActivity(_DeepSTARREmbryoModel):
+    tissue = "brain_specific"
+    output_kind = "activity"
+    checkpoint_files = _embryo_checkpoint_files(tissue, output_kind)

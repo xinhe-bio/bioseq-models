@@ -9,6 +9,22 @@ from bioseq_models import (
     resources,
 )
 
+EMBRYO_ACCESSIBILITY_TISSUES = (
+    "brain",
+    "cns",
+    "epidermis",
+    "midgut",
+    "somatic_muscle",
+    "visceral_muscle",
+)
+EMBRYO_ACTIVITY_TISSUES = (
+    "brain_vnc",
+    "muscle",
+    "epidermis",
+    "gut",
+    "brain_specific",
+)
+
 MODEL_CASES = [
     ("optimus5prime", "A" * 50, 1, {}),
     ("deepstarr", "A" * 249, 2, {}),
@@ -24,7 +40,14 @@ MODEL_CASES = [
     ("deepstarr_mouse_hindbrain_accessibility", "A" * 1001, 1, {}),
     ("deepstarr_mouse_neural_tube_activity", "A" * 1001, 1, {}),
     ("deepstarr_mouse_neural_tube_accessibility", "A" * 1001, 1, {}),
-    ("deepstarr_embryo_brain_vnc_activity", "A" * 1001, 1, {}),
+    *(
+        (f"deepstarr_embryo_{tissue}_accessibility", "A" * 1001, 1, {})
+        for tissue in EMBRYO_ACCESSIBILITY_TISSUES
+    ),
+    *(
+        (f"deepstarr_embryo_{tissue}_activity", "A" * 1001, 1, {})
+        for tissue in EMBRYO_ACTIVITY_TISSUES
+    ),
     ("malinois", "A" * 200, 3, {}),
     ("dream_legnet", "A" * 110, 1, {}),
     ("cetnar_stability", "A" * 60, 1, {}),
@@ -85,7 +108,7 @@ def test_registry_and_aliases():
         "agarwal_wtc11",
     }
     assert available_models(status="official_checkpoint") == ("malinois",)
-    assert set(available_models(status="converted_official_checkpoint")) == {
+    expected_converted = {
         "deepstarr_mouse_heart_activity",
         "deepstarr_mouse_heart_accessibility",
         "deepstarr_mouse_limb_activity",
@@ -98,8 +121,18 @@ def test_registry_and_aliases():
         "deepstarr_mouse_hindbrain_accessibility",
         "deepstarr_mouse_neural_tube_activity",
         "deepstarr_mouse_neural_tube_accessibility",
-        "deepstarr_embryo_brain_vnc_activity",
+        *(
+            f"deepstarr_embryo_{tissue}_accessibility"
+            for tissue in EMBRYO_ACCESSIBILITY_TISSUES
+        ),
+        *(
+            f"deepstarr_embryo_{tissue}_activity"
+            for tissue in EMBRYO_ACTIVITY_TISSUES
+        ),
     }
+    assert set(available_models(status="converted_official_checkpoint")) == (
+        expected_converted
+    )
 
 
 @pytest.mark.parametrize("padding_side", ["left", "right"])
@@ -160,7 +193,8 @@ def test_malinois_official_checkpoint_replays_retained_prediction():
         ("deepstarr_mouse_hindbrain_accessibility", 2.260223150253296),
         ("deepstarr_mouse_neural_tube_activity", 0.14803923666477203),
         ("deepstarr_mouse_neural_tube_accessibility", 2.2527151107788086),
-        ("deepstarr_embryo_brain_vnc_activity", 0.22433896362781525),
+        ("deepstarr_embryo_brain_vnc_activity", 0.17912831902503967),
+        ("deepstarr_embryo_brain_accessibility", -9.825883865356445),
     ],
 )
 def test_tissue_deepstarr_checkpoints_replay_retained_predictions(name, expected):
@@ -171,6 +205,11 @@ def test_tissue_deepstarr_checkpoints_replay_retained_predictions(name, expected
 def test_deepstarr_mouse_uses_all_official_folds_and_replicates():
     model = load_model("deepstarr_mouse_limb_activity", device="cpu")
     assert model.ensemble_size == 6
+
+
+def test_deepstarr_embryo_uses_all_usable_official_folds_and_replicates():
+    model = load_model("deepstarr_embryo_brain_vnc_activity", device="cpu")
+    assert model.ensemble_size == 22
 
 
 def test_dream_legnet_full_and_variable_region_inputs_match():
@@ -235,7 +274,7 @@ def test_hugging_face_download_is_scoped_to_one_model(monkeypatch, tmp_path):
         "utr_code/HEK293T.txt",
     ]
     assert all(call["repo_id"] == "xinHesysu/bioseq-models" for call in calls)
-    assert all(call["revision"] == "v0.8.0" for call in calls)
+    assert all(call["revision"] == "v0.9.0" for call in calls)
 
 
 def test_deepstarr_mouse_download_fetches_one_six_checkpoint_ensemble(
@@ -255,4 +294,29 @@ def test_deepstarr_mouse_download_fetches_one_six_checkpoint_ensemble(
         f"checkpoints/deepstarr_mouse_midbrain_activity_fold{fold:02d}_rep{rep}.pt"
         for fold in range(1, 4)
         for rep in range(1, 3)
+    ]
+
+
+def test_deepstarr_embryo_download_fetches_one_checkpoint_ensemble(
+    monkeypatch, tmp_path
+):
+    calls = []
+
+    def fake_download(**kwargs):
+        calls.append(kwargs)
+        return tmp_path / kwargs["filename"]
+
+    monkeypatch.setattr(resources, "hf_hub_download", fake_download)
+    downloaded = download_model(
+        "deepstarr_embryo_visceral_muscle_accessibility",
+        cache_dir=tmp_path,
+    )
+
+    assert len(downloaded) == 29
+    assert [call["filename"] for call in calls] == [
+        "checkpoints/deepstarr_embryo_visceral_muscle_accessibility_"
+        f"fold{fold:02d}_rep{rep}.pt"
+        for fold in range(1, 11)
+        for rep in range(1, 4)
+        if (fold, rep) != (9, 3)
     ]

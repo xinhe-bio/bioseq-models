@@ -3,7 +3,7 @@
 The checkpoints were selected from the BioSeqBench reproductions and UTR-CODE
 projects. They are distributed as individually downloadable files in the
 versioned Hugging Face model repository.
-The Python package pins version 0.8.0 to the immutable `v0.8.0` repository tag.
+The Python package pins version 0.9.0 to the immutable `v0.9.0` repository tag.
 
 | Model | Bundled checkpoint | Notes |
 |---|---|---|
@@ -21,7 +21,8 @@ The Python package pins version 0.8.0 to the immutable `v0.8.0` repository tag.
 | `deepstarr_mouse_hindbrain_accessibility` | six official checkpoints | Hindbrain accessibility averaged across three folds and two replicates. |
 | `deepstarr_mouse_neural_tube_activity` | six official checkpoints | Neural-tube activity probability averaged across three folds and two replicates. |
 | `deepstarr_mouse_neural_tube_accessibility` | six official checkpoints | Neural-tube accessibility averaged across three folds and two replicates. |
-| `deepstarr_embryo_brain_vnc_activity` | official fold 01, replicate 1 | Drosophila brain/VNC enhancer-activity Keras checkpoint converted to PyTorch; sigmoid probability output. |
+| `deepstarr_embryo_*_accessibility` | 22–29 usable official checkpoints per resource | Six Drosophila embryo accessibility resources, each using every released checkpoint with finite parameters. |
+| `deepstarr_embryo_*_activity` | 22–28 usable official checkpoints per resource | Five tissue-activity resources. Every released checkpoint with finite parameters is included. |
 | `malinois` | official `20211113_021200` checkpoint | Official BODA PyTorch architecture and weights. The adapter places each 200-nt sequence between the two 200-nt MPRA vector contexts used by the authors. Outputs retain the training targets' log2 fold-change scale in K562, HepG2, and SK-N-SH order. |
 | `dream_legnet` | one validation-selected checkpoint | Reproduced Autosome/LegNet model with the published 150-position preprocessing and forward/reverse-complement average. |
 | `cetnar_stability` | best validation CNN-BiLSTM | Sequence model trained to predict `decay_rate_k_fit`. |
@@ -55,15 +56,28 @@ are omitted; the parameter tensors are unchanged.
 - DeepSTARR-Embryo source: https://github.com/bernardo-de-almeida/DeepSTARR_embryo
 - DeepSTARR-Embryo weights: https://doi.org/10.5281/zenodo.8011696
 
+The official enhancer-activity archive contains 148 of the 150 expected
+fold/replicate checkpoints: gut fold 08 replicate 3 and muscle fold 09
+replicate 3 are absent. Twenty-five of the released activity checkpoints
+contain non-finite parameters and return NaN in the original Keras model, so
+they are excluded from the packaged ensembles. The accessibility archive
+contains 178 checkpoints for six tissues; midgut fold 08 replicate 3 and
+visceral-muscle fold 09 replicate 3 are absent. Twenty-five released
+accessibility checkpoints also contain non-finite parameters and are excluded.
+The exact inventory is recorded in `bioseq_models/deepstarr_embryo.py`.
+
 The original models use channels-last Keras tensors. Conversion transposes the
 Conv1D and dense kernels and restores channels-last feature order immediately
 before the flattened dense layers. All 72 DeepSTARR-Mouse checkpoints were
 compared with their Keras sources on three deterministic sequences. The maximum
 absolute difference across every tissue, task, fold, and replicate was
-`3.34e-6`. The existing embryo brain/VNC conversion has a maximum absolute
-difference of `1.29e-6`.
+`3.34e-6`. The DeepSTARR-Embryo conversions were checked against their Keras
+sources on three deterministic inputs for every usable checkpoint. The maximum
+absolute difference was `1.67e-6` for activity and `2.44e-3` for accessibility
+(the largest accessibility prediction was approximately 7,213).
 The validation used DeepSTARR-Mouse source revision
 `64245a665f78c7797aedda308e372633f842adb8` and DeepSTARR-Embryo revision
 `d966384e179eb5fba9f96e19c26ffcdabde95ae4`. The reusable conversion command is
-provided in `scripts/convert_deepstarr_tissue_checkpoint.py`; the complete
-Mouse conversion is prepared by `scripts/prepare_deepstarr_mouse_checkpoints.py`.
+provided in `scripts/convert_deepstarr_tissue_checkpoint.py`; complete batch
+conversion is provided by `scripts/prepare_deepstarr_mouse_checkpoints.py` and
+`scripts/prepare_deepstarr_embryo_checkpoints.py`.

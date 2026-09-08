@@ -7,8 +7,30 @@ from pathlib import Path
 
 from huggingface_hub import hf_hub_download
 
+from .deepstarr_embryo import checkpoint_files as _embryo_checkpoint_files
+
 HF_REPO_ID = "xinHesysu/bioseq-models"
-HF_REVISION = "v0.8.0"
+HF_REVISION = "v0.9.0"
+
+_DEEPSTARR_EMBRYO_ACCESSIBILITY_TISSUES = (
+    "brain",
+    "cns",
+    "epidermis",
+    "midgut",
+    "somatic_muscle",
+    "visceral_muscle",
+)
+_DEEPSTARR_EMBRYO_ACTIVITY_TISSUES = (
+    "brain_vnc",
+    "muscle",
+    "epidermis",
+    "gut",
+    "brain_specific",
+)
+_DEEPSTARR_EMBRYO_MODELS = (
+    *((tissue, "accessibility") for tissue in _DEEPSTARR_EMBRYO_ACCESSIBILITY_TISSUES),
+    *((tissue, "activity") for tissue in _DEEPSTARR_EMBRYO_ACTIVITY_TISSUES),
+)
 
 MODEL_FILES = {
     "optimus5prime": ("checkpoints/optimus5prime.pt",),
@@ -29,9 +51,10 @@ MODEL_FILES = {
         )
         for kind in ("activity", "accessibility")
     },
-    "deepstarr_embryo_brain_vnc_activity": (
-        "checkpoints/deepstarr_embryo_brain_vnc_activity_fold01_rep1.pt",
-    ),
+    **{
+        f"deepstarr_embryo_{tissue}_{kind}": _embryo_checkpoint_files(tissue, kind)
+        for tissue, kind in _DEEPSTARR_EMBRYO_MODELS
+    },
     "malinois": ("checkpoints/malinois.pt",),
     "dream_legnet": ("checkpoints/dream_legnet.pt",),
     "cetnar_stability": ("checkpoints/cetnar_stability_cnn.pt",),
