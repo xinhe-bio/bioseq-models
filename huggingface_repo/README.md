@@ -23,6 +23,11 @@ DeepSTARR-Mouse, DeepSTARR-Embryo, Malinois, DREAM LegNet, Cetnar stability,
 PARM K562, Agarwal lentiMPRA, UTR-CODE, and the multi-species CDS stability
 model with CodonBERT.
 
+DeepSTARR-Mouse includes separate activity and accessibility models for heart,
+limb, midbrain, forebrain, hindbrain, and neural tube. Each package resource
+uses all six official checkpoints from three cross-validation folds and two
+replicates; requesting one resource downloads only its six checkpoint files.
+
 Most checkpoints are project-trained reproductions and are not represented as
 author-released weights. See the package's `MODEL_PROVENANCE.md` for details.
 

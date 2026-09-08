@@ -20,6 +20,41 @@ class ModelInfo:
     status: str = "reproduced"
 
 
+_DEEPSTARR_MOUSE_TISSUES = (
+    ("heart", "Heart"),
+    ("limb", "Limb"),
+    ("midbrain", "Midbrain"),
+    ("forebrain", "Forebrain"),
+    ("hindbrain", "Hindbrain"),
+    ("neural_tube", "NeuralTube"),
+)
+
+
+def _deepstarr_mouse_info(tissue: str, class_tissue: str, kind: str) -> ModelInfo:
+    canonical = f"deepstarr_mouse_{tissue}_{kind}"
+    task = f"{tissue}_{'activity_probability' if kind == 'activity' else kind}"
+    aliases: tuple[str, ...] = ()
+    if tissue == "heart" and kind == "activity":
+        aliases = ("deepstarr_mouse", "deepstarr_mouse_heart")
+    elif tissue == "heart" and kind == "accessibility":
+        aliases = ("deepstarr_mouse_accessibility",)
+    elif tissue == "midbrain" and kind == "activity":
+        aliases = ("deepstarr_mouse_cns", "deepstarr_mouse_cns_activity")
+    elif tissue == "midbrain" and kind == "accessibility":
+        aliases = ("deepstarr_mouse_cns_accessibility",)
+    elif tissue == "neural_tube":
+        aliases = (f"deepstarr_mouse_neuraltube_{kind}",)
+    return ModelInfo(
+        canonical,
+        1001,
+        (task,),
+        f"DeepSTARR-Mouse {tissue.replace('_', ' ')} {kind}, six-checkpoint ensemble",
+        f"bioseq_models.adapters.deepstarr_tissue:DeepSTARRMouse{class_tissue}{kind.title()}",
+        aliases,
+        status="converted_official_checkpoint",
+    )
+
+
 _MODELS = (
     ModelInfo(
         "optimus5prime",
@@ -38,23 +73,10 @@ _MODELS = (
         "bioseq_models.adapters.deepstarr:DeepSTARR",
         status="paper_architecture",
     ),
-    ModelInfo(
-        "deepstarr_mouse_heart_activity",
-        1001,
-        ("heart_activity_probability",),
-        "DeepSTARR-Mouse heart activity, fold 01 replicate 1",
-        "bioseq_models.adapters.deepstarr_tissue:DeepSTARRMouseHeartActivity",
-        ("deepstarr_mouse", "deepstarr_mouse_heart"),
-        status="converted_official_checkpoint",
-    ),
-    ModelInfo(
-        "deepstarr_mouse_heart_accessibility",
-        1001,
-        ("heart_accessibility",),
-        "DeepSTARR-Mouse heart accessibility, fold 01 replicate 1",
-        "bioseq_models.adapters.deepstarr_tissue:DeepSTARRMouseHeartAccessibility",
-        ("deepstarr_mouse_accessibility",),
-        status="converted_official_checkpoint",
+    *(
+        _deepstarr_mouse_info(tissue, class_tissue, kind)
+        for tissue, class_tissue in _DEEPSTARR_MOUSE_TISSUES
+        for kind in ("activity", "accessibility")
     ),
     ModelInfo(
         "deepstarr_embryo_brain_vnc_activity",

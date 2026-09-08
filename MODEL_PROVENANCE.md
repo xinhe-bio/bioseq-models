@@ -3,14 +3,24 @@
 The checkpoints were selected from the BioSeqBench reproductions and UTR-CODE
 projects. They are distributed as individually downloadable files in the
 versioned Hugging Face model repository.
-The Python package pins version 0.7.0 to the immutable `v0.7.0` repository tag.
+The Python package pins version 0.8.0 to the immutable `v0.8.0` repository tag.
 
 | Model | Bundled checkpoint | Notes |
 |---|---|---|
 | `optimus5prime` | one selected checkpoint | Published Optimus 5-Prime architecture with BioSeqBench-trained weights. |
 | `deepstarr` | one selected two-output checkpoint | Published DeepSTARR architecture with BioSeqBench-trained weights. |
-| `deepstarr_mouse_heart_activity` | official fold 01, replicate 1 | Heart enhancer-activity Keras checkpoint converted to PyTorch; sigmoid probability output. |
-| `deepstarr_mouse_heart_accessibility` | official fold 01, replicate 1 | Heart accessibility Keras checkpoint converted to PyTorch; linear output. |
+| `deepstarr_mouse_heart_activity` | six official checkpoints | Heart activity probability averaged across three folds and two replicates. |
+| `deepstarr_mouse_heart_accessibility` | six official checkpoints | Heart accessibility averaged across three folds and two replicates. |
+| `deepstarr_mouse_limb_activity` | six official checkpoints | Limb activity probability averaged across three folds and two replicates. |
+| `deepstarr_mouse_limb_accessibility` | six official checkpoints | Limb accessibility averaged across three folds and two replicates. |
+| `deepstarr_mouse_midbrain_activity` | six official checkpoints | Midbrain/CNS activity probability averaged across three folds and two replicates. |
+| `deepstarr_mouse_midbrain_accessibility` | six official checkpoints | Midbrain accessibility averaged across three folds and two replicates. |
+| `deepstarr_mouse_forebrain_activity` | six official checkpoints | Forebrain activity probability averaged across three folds and two replicates. |
+| `deepstarr_mouse_forebrain_accessibility` | six official checkpoints | Forebrain accessibility averaged across three folds and two replicates. |
+| `deepstarr_mouse_hindbrain_activity` | six official checkpoints | Hindbrain activity probability averaged across three folds and two replicates. |
+| `deepstarr_mouse_hindbrain_accessibility` | six official checkpoints | Hindbrain accessibility averaged across three folds and two replicates. |
+| `deepstarr_mouse_neural_tube_activity` | six official checkpoints | Neural-tube activity probability averaged across three folds and two replicates. |
+| `deepstarr_mouse_neural_tube_accessibility` | six official checkpoints | Neural-tube accessibility averaged across three folds and two replicates. |
 | `deepstarr_embryo_brain_vnc_activity` | official fold 01, replicate 1 | Drosophila brain/VNC enhancer-activity Keras checkpoint converted to PyTorch; sigmoid probability output. |
 | `malinois` | official `20211113_021200` checkpoint | Official BODA PyTorch architecture and weights. The adapter places each 200-nt sequence between the two 200-nt MPRA vector contexts used by the authors. Outputs retain the training targets' log2 fold-change scale in K562, HepG2, and SK-N-SH order. |
 | `dream_legnet` | one validation-selected checkpoint | Reproduced Autosome/LegNet model with the published 150-position preprocessing and forward/reverse-complement average. |
@@ -47,10 +57,13 @@ are omitted; the parameter tensors are unchanged.
 
 The original models use channels-last Keras tensors. Conversion transposes the
 Conv1D and dense kernels and restores channels-last feature order immediately
-before the flattened dense layers. Validation against Keras gave maximum
-absolute differences of `1.31e-8` for mouse heart activity, `4.77e-7` for
-mouse heart accessibility, and `1.29e-6` for embryo brain/VNC activity.
+before the flattened dense layers. All 72 DeepSTARR-Mouse checkpoints were
+compared with their Keras sources on three deterministic sequences. The maximum
+absolute difference across every tissue, task, fold, and replicate was
+`3.34e-6`. The existing embryo brain/VNC conversion has a maximum absolute
+difference of `1.29e-6`.
 The validation used DeepSTARR-Mouse source revision
 `64245a665f78c7797aedda308e372633f842adb8` and DeepSTARR-Embryo revision
 `d966384e179eb5fba9f96e19c26ffcdabde95ae4`. The reusable conversion command is
-provided in `scripts/convert_deepstarr_tissue_checkpoint.py`.
+provided in `scripts/convert_deepstarr_tissue_checkpoint.py`; the complete
+Mouse conversion is prepared by `scripts/prepare_deepstarr_mouse_checkpoints.py`.

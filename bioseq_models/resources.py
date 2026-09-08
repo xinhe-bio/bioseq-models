@@ -7,19 +7,28 @@ from pathlib import Path
 
 from huggingface_hub import hf_hub_download
 
-
 HF_REPO_ID = "xinHesysu/bioseq-models"
-HF_REVISION = "v0.7.0"
+HF_REVISION = "v0.8.0"
 
 MODEL_FILES = {
     "optimus5prime": ("checkpoints/optimus5prime.pt",),
     "deepstarr": ("checkpoints/deepstarr.pt",),
-    "deepstarr_mouse_heart_activity": (
-        "checkpoints/deepstarr_mouse_heart_activity_fold01_rep1.pt",
-    ),
-    "deepstarr_mouse_heart_accessibility": (
-        "checkpoints/deepstarr_mouse_heart_accessibility_fold01_rep1.pt",
-    ),
+    **{
+        f"deepstarr_mouse_{tissue}_{kind}": tuple(
+            f"checkpoints/deepstarr_mouse_{tissue}_{kind}_fold{fold:02d}_rep{rep}.pt"
+            for fold in range(1, 4)
+            for rep in range(1, 3)
+        )
+        for tissue in (
+            "heart",
+            "limb",
+            "midbrain",
+            "forebrain",
+            "hindbrain",
+            "neural_tube",
+        )
+        for kind in ("activity", "accessibility")
+    },
     "deepstarr_embryo_brain_vnc_activity": (
         "checkpoints/deepstarr_embryo_brain_vnc_activity_fold01_rep1.pt",
     ),
@@ -32,13 +41,10 @@ MODEL_FILES = {
         "cds_stability/codonbert/config.json",
         "cds_stability/codonbert/pytorch_model.bin",
     ),
-    "parm_k562": tuple(
-        f"checkpoints/parm_k562_fold{fold}.pt" for fold in range(5)
-    ),
+    "parm_k562": tuple(f"checkpoints/parm_k562_fold{fold}.pt" for fold in range(5)),
     **{
         f"agarwal_{cell_type}": tuple(
-            f"checkpoints/agarwal_{cell_type}_fold{fold}.pt"
-            for fold in range(1, 11)
+            f"checkpoints/agarwal_{cell_type}_fold{fold}.pt" for fold in range(1, 11)
         )
         for cell_type in ("hepg2", "k562", "wtc11")
     },

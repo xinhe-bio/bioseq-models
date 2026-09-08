@@ -11,7 +11,7 @@ pip install "git+https://github.com/UTR-CODE/bioseq-models.git"
 Only the files required by the selected model are downloaded from Hugging Face
 on first use and cached locally. The weights are hosted in the
 [`xinHesysu/bioseq-models`](https://huggingface.co/xinHesysu/bioseq-models)
-model repository and pinned to the `v0.7.0` revision.
+model repository and pinned to the `v0.8.0` revision.
 
 ## Basic use
 
@@ -46,25 +46,33 @@ This downloads one Optimus checkpoint, not the complete model collection.
 ## Tissue-specific DeepSTARR
 
 The converted DeepSTARR-Mouse and DeepSTARR-Embryo models accept 1,001-nt
-sequences. Activity models return probabilities; the accessibility model has a
-linear output.
+sequences. Activity models return probabilities; accessibility models have
+linear outputs.
 
 ```python
 from bioseq_models import load_model
 
 sequence = "ACGT" * 250 + "A"
 
-mouse = load_model("deepstarr_mouse", device="cpu")
-mouse_activity = mouse.score([sequence])
+heart_activity = load_model("deepstarr_mouse_heart_activity", device="cpu")
+heart_probability = heart_activity.score([sequence])
+
+limb_accessibility = load_model(
+    "deepstarr_mouse_limb_accessibility",
+    device="cpu",
+)
+limb_accessibility_score = limb_accessibility.score([sequence])
 
 embryo = load_model("deepstarr_embryo", device="cpu")
 embryo_activity = embryo.score([sequence])
 ```
 
-The short aliases select the available activity checkpoints: mouse heart and
-Drosophila brain/VNC, respectively. Use
-`deepstarr_mouse_heart_accessibility` for the mouse accessibility checkpoint.
-All three resources use the selected official fold 01, replicate 1 checkpoint.
+DeepSTARR-Mouse provides separate activity and accessibility resources for
+heart, limb, midbrain, forebrain, hindbrain, and neural tube. Each resource
+averages the six official checkpoints from three cross-validation folds and two
+replicates. `deepstarr_mouse` selects heart activity, while
+`deepstarr_mouse_cns` selects midbrain activity. DeepSTARR-Embryo currently uses
+the selected official brain/VNC fold 01, replicate 1 checkpoint.
 
 ## Malinois
 
@@ -151,6 +159,16 @@ normalized model score, not a half-life measured in hours.
 | `deepstarr` | 249 nt | `developmental`, `housekeeping` |
 | `deepstarr_mouse_heart_activity` | 1,001 nt | `heart_activity_probability` |
 | `deepstarr_mouse_heart_accessibility` | 1,001 nt | `heart_accessibility` |
+| `deepstarr_mouse_limb_activity` | 1,001 nt | `limb_activity_probability` |
+| `deepstarr_mouse_limb_accessibility` | 1,001 nt | `limb_accessibility` |
+| `deepstarr_mouse_midbrain_activity` | 1,001 nt | `midbrain_activity_probability` |
+| `deepstarr_mouse_midbrain_accessibility` | 1,001 nt | `midbrain_accessibility` |
+| `deepstarr_mouse_forebrain_activity` | 1,001 nt | `forebrain_activity_probability` |
+| `deepstarr_mouse_forebrain_accessibility` | 1,001 nt | `forebrain_accessibility` |
+| `deepstarr_mouse_hindbrain_activity` | 1,001 nt | `hindbrain_activity_probability` |
+| `deepstarr_mouse_hindbrain_accessibility` | 1,001 nt | `hindbrain_accessibility` |
+| `deepstarr_mouse_neural_tube_activity` | 1,001 nt | `neural_tube_activity_probability` |
+| `deepstarr_mouse_neural_tube_accessibility` | 1,001 nt | `neural_tube_accessibility` |
 | `deepstarr_embryo_brain_vnc_activity` | 1,001 nt | `brain_vnc_activity_probability` |
 | `malinois` | 200-nt enhancer | `K562_log2FC`, `HepG2_log2FC`, `SKNSH_log2FC` |
 | `dream_legnet` | 110-nt construct or 93-nt variable region | `promoter_activity` |
