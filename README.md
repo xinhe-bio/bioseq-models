@@ -154,42 +154,38 @@ normalized model score, not a half-life measured in hours.
 
 ## Available models
 
-| Model | Sequence input | Prediction tasks | Paper |
-|---|---:|---|---|
-| `optimus5prime` | 50-nt 5′UTR | `mrl` | [Sample et al. (2019)](https://doi.org/10.1038/s41587-019-0164-5) |
-| `utr_code` | up to 1000-nt 5′UTR, 4500-nt CDS, or 4000-nt 3′UTR | `log1p_rpf_rpkm_x5` | |
-| `cds_stability` | complete CDS up to 9000 nt | `stability_score` | |
-| `deepstarr` | 249 nt | `developmental`, `housekeeping` | [de Almeida et al. (2022)](https://doi.org/10.1038/s41588-022-01048-5) |
-| `deepstarr_mouse_heart_activity` | 1,001 nt | `heart_activity_probability` | [Chen et al. (2026)](https://doi.org/10.1038/s41588-026-02729-1) |
-| `deepstarr_mouse_heart_accessibility` | 1,001 nt | `heart_accessibility` | [Chen et al. (2026)](https://doi.org/10.1038/s41588-026-02729-1) |
-| `deepstarr_mouse_limb_activity` | 1,001 nt | `limb_activity_probability` | [Chen et al. (2026)](https://doi.org/10.1038/s41588-026-02729-1) |
-| `deepstarr_mouse_limb_accessibility` | 1,001 nt | `limb_accessibility` | [Chen et al. (2026)](https://doi.org/10.1038/s41588-026-02729-1) |
-| `deepstarr_mouse_midbrain_activity` | 1,001 nt | `midbrain_activity_probability` | [Chen et al. (2026)](https://doi.org/10.1038/s41588-026-02729-1) |
-| `deepstarr_mouse_midbrain_accessibility` | 1,001 nt | `midbrain_accessibility` | [Chen et al. (2026)](https://doi.org/10.1038/s41588-026-02729-1) |
-| `deepstarr_mouse_forebrain_activity` | 1,001 nt | `forebrain_activity_probability` | [Chen et al. (2026)](https://doi.org/10.1038/s41588-026-02729-1) |
-| `deepstarr_mouse_forebrain_accessibility` | 1,001 nt | `forebrain_accessibility` | [Chen et al. (2026)](https://doi.org/10.1038/s41588-026-02729-1) |
-| `deepstarr_mouse_hindbrain_activity` | 1,001 nt | `hindbrain_activity_probability` | [Chen et al. (2026)](https://doi.org/10.1038/s41588-026-02729-1) |
-| `deepstarr_mouse_hindbrain_accessibility` | 1,001 nt | `hindbrain_accessibility` | [Chen et al. (2026)](https://doi.org/10.1038/s41588-026-02729-1) |
-| `deepstarr_mouse_neural_tube_activity` | 1,001 nt | `neural_tube_activity_probability` | [Chen et al. (2026)](https://doi.org/10.1038/s41588-026-02729-1) |
-| `deepstarr_mouse_neural_tube_accessibility` | 1,001 nt | `neural_tube_accessibility` | [Chen et al. (2026)](https://doi.org/10.1038/s41588-026-02729-1) |
-| `deepstarr_embryo_brain_accessibility` | 1,001 nt | `brain_accessibility` | [de Almeida et al. (2023)](https://doi.org/10.1038/s41586-023-06905-9) |
-| `deepstarr_embryo_cns_accessibility` | 1,001 nt | `cns_accessibility` | [de Almeida et al. (2023)](https://doi.org/10.1038/s41586-023-06905-9) |
-| `deepstarr_embryo_epidermis_accessibility` | 1,001 nt | `epidermis_accessibility` | [de Almeida et al. (2023)](https://doi.org/10.1038/s41586-023-06905-9) |
-| `deepstarr_embryo_midgut_accessibility` | 1,001 nt | `midgut_accessibility` | [de Almeida et al. (2023)](https://doi.org/10.1038/s41586-023-06905-9) |
-| `deepstarr_embryo_somatic_muscle_accessibility` | 1,001 nt | `somatic_muscle_accessibility` | [de Almeida et al. (2023)](https://doi.org/10.1038/s41586-023-06905-9) |
-| `deepstarr_embryo_visceral_muscle_accessibility` | 1,001 nt | `visceral_muscle_accessibility` | [de Almeida et al. (2023)](https://doi.org/10.1038/s41586-023-06905-9) |
-| `deepstarr_embryo_brain_vnc_activity` | 1,001 nt | `brain_vnc_activity_probability` | [de Almeida et al. (2023)](https://doi.org/10.1038/s41586-023-06905-9) |
-| `deepstarr_embryo_muscle_activity` | 1,001 nt | `muscle_activity_probability` | [de Almeida et al. (2023)](https://doi.org/10.1038/s41586-023-06905-9) |
-| `deepstarr_embryo_epidermis_activity` | 1,001 nt | `epidermis_activity_probability` | [de Almeida et al. (2023)](https://doi.org/10.1038/s41586-023-06905-9) |
-| `deepstarr_embryo_gut_activity` | 1,001 nt | `gut_activity_probability` | [de Almeida et al. (2023)](https://doi.org/10.1038/s41586-023-06905-9) |
-| `deepstarr_embryo_brain_specific_activity` | 1,001 nt | `brain_specific_activity_probability` | [de Almeida et al. (2023)](https://doi.org/10.1038/s41586-023-06905-9) |
-| `malinois` | 200-nt enhancer | `K562_log2FC`, `HepG2_log2FC`, `SKNSH_log2FC` | [Gosai et al. (2024)](https://doi.org/10.1038/s41586-024-08070-z) |
-| `dream_legnet` | 110-nt construct or 93-nt variable region | `promoter_activity` | [Penzar et al. (2023)](https://doi.org/10.1093/bioinformatics/btad457) |
-| `cetnar_stability` | up to 80 nt | `decay_rate_k_fit` | [Cetnar et al. (2024)](https://doi.org/10.1038/s41467-024-54059-7) |
-| `parm_k562` | up to 586 nt | `log2rpm_k562` | [Barbadilla-Martínez et al. (2026)](https://doi.org/10.1038/s41586-025-10093-z) |
-| `agarwal_hepg2` | 230 nt | `log2_rna_dna` | [Agarwal et al. (2025)](https://doi.org/10.1038/s41586-024-08430-9) |
-| `agarwal_k562` | 230 nt | `log2_rna_dna` | [Agarwal et al. (2025)](https://doi.org/10.1038/s41586-024-08430-9) |
-| `agarwal_wtc11` | 230 nt | `log2_rna_dna` | [Agarwal et al. (2025)](https://doi.org/10.1038/s41586-024-08430-9) |
+为适应 GitHub 的窄屏显示，模型按家族分组；论文链接列在表格下方。
+
+| Model | Input and outputs |
+|---|---|
+| `optimus5prime` | 50-nt 5′UTR → `mrl` |
+| `utr_code` | 5′UTR/CDS/3′UTR → `log1p_rpf_rpkm_x5` |
+| `cds_stability` | complete CDS → `stability_score` |
+| `deepstarr` | 249 nt → `developmental`, `housekeeping` |
+| `malinois` | 200-nt enhancer → K562/HepG2/SK-N-SH `log2FC` |
+| `dream_legnet` | 110-nt construct → `promoter_activity` |
+| `cetnar_stability` | ≤80 nt → `decay_rate_k_fit` |
+| `parm_k562` | ≤586 nt → `log2rpm_k562` |
+| `agarwal_hepg2` / `agarwal_k562` / `agarwal_wtc11` | 230 nt → `log2_rna_dna` |
+
+### DeepSTARR-Mouse
+
+All models take 1,001 nt and return tissue-specific activity probability or accessibility:
+`heart`, `limb`, `midbrain`, `forebrain`, `hindbrain`, `neural_tube` (each with `activity` and `accessibility`).
+
+### DeepSTARR-Embryo
+
+All models take 1,001 nt. Accessibility: `brain`, `cns`, `epidermis`, `midgut`,
+`somatic_muscle`, `visceral_muscle`. Activity: `brain_vnc`, `muscle`,
+`epidermis`, `gut`, `brain_specific`.
+
+### Papers
+
+- Optimus5: [Sample et al. (2019)](https://doi.org/10.1038/s41587-019-0164-5); DeepSTARR: [de Almeida et al. (2022)](https://doi.org/10.1038/s41588-022-01048-5)
+- DeepSTARR-Mouse: [Chen et al. (2026)](https://doi.org/10.1038/s41588-026-02729-1); DeepSTARR-Embryo: [de Almeida et al. (2023)](https://doi.org/10.1038/s41586-023-06905-9)
+- Malinois: [Gosai et al. (2024)](https://doi.org/10.1038/s41586-024-08070-z); DREAM LegNet: [Penzar et al. (2023)](https://doi.org/10.1093/bioinformatics/btad457)
+- Cetnar: [Cetnar et al. (2024)](https://doi.org/10.1038/s41467-024-54059-7); PARM: [Barbadilla-Martínez et al. (2026)](https://doi.org/10.1038/s41586-025-10093-z)
+- Agarwal: [Agarwal et al. (2025)](https://doi.org/10.1038/s41586-024-08430-9)
 
 ```python
 from bioseq_models import available_models, model_info
