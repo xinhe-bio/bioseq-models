@@ -11,7 +11,7 @@ from pathlib import Path
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY))
-from bioseq_models.resources import MODEL_FILES  # noqa: E402
+from bioseq_models.resources import MODEL_FILES
 
 
 def arguments() -> argparse.Namespace:

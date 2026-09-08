@@ -6,7 +6,7 @@ from .resources import download_model
 __all__ = [
     "ModelInfo",
     "available_models",
-    "model_info",
-    "load_model",
     "download_model",
+    "load_model",
+    "model_info",
 ]

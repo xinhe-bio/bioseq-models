@@ -27,7 +27,7 @@ class DeepSTARR(TorchSequenceModel):
         checkpoint: str | Path | None = None,
         weights_dir: str | Path | None = None,
         **kwargs,
-    ) -> "DeepSTARR":
+    ) -> DeepSTARR:
         path = Path(checkpoint) if checkpoint else weight_path(
             "checkpoints/deepstarr.pt", weights_dir
         )

@@ -12,7 +12,6 @@ from ..inference import TorchSequenceModel
 from ..resources import weight_path
 from .common import ScaledEnsemble, encode_acgt_sequences
 
-
 MODEL_LENGTH = 600
 ADAPTER_5 = "CAGTGAT"
 ADAPTER_3 = "CACGACG"
@@ -64,7 +63,7 @@ class PARMK562(TorchSequenceModel):
     @classmethod
     def from_checkpoint(
         cls, checkpoint=None, weights_dir: str | Path | None = None, **kwargs
-    ) -> "PARMK562":
+    ) -> PARMK562:
         paths = (
             tuple(
                 weight_path(f"checkpoints/parm_k562_fold{fold}.pt", weights_dir)

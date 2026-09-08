@@ -45,7 +45,7 @@ class CetnarStability(TorchSequenceModel):
         checkpoint: str | Path | None = None,
         weights_dir: str | Path | None = None,
         **kwargs,
-    ) -> "CetnarStability":
+    ) -> CetnarStability:
         path = Path(checkpoint) if checkpoint else weight_path(
             "checkpoints/cetnar_stability_cnn.pt", weights_dir
         )

@@ -30,7 +30,7 @@ class Optimus5Prime(TorchSequenceModel):
         checkpoint: str | Path | None = None,
         weights_dir: str | Path | None = None,
         **kwargs,
-    ) -> "Optimus5Prime":
+    ) -> Optimus5Prime:
         path = Path(checkpoint) if checkpoint else weight_path(
             "checkpoints/optimus5prime.pt", weights_dir
         )

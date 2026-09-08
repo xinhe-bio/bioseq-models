@@ -6,7 +6,6 @@ import numpy as np
 import torch
 from torch import nn
 
-
 CODONS = tuple(
     first + second + third
     for second in "TCAG"

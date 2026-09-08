@@ -12,7 +12,6 @@ from ..inference import _prediction_matrix, normalize_sequences
 from ..resources import weight_path
 from .common import encode_acgt_sequences
 
-
 REGION_LIMITS = {"utr5": 1000, "cds": 4500, "utr3": 4000}
 
 
@@ -89,7 +88,7 @@ class UTRCode:
         checkpoint: str | Path | None = None,
         weights_dir: str | Path | None = None,
         **kwargs,
-    ) -> "UTRCode":
+    ) -> UTRCode:
         if transcriptome_profile is None:
             if str(cell_context).strip().upper() != "HEK293T":
                 raise ValueError(

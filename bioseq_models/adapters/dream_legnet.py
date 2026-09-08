@@ -11,6 +11,7 @@ from ..architectures import LegNetAutosome
 from ..inference import TorchSequenceModel
 from ..resources import weight_path
 from .common import encode_acgt_sequences
+
 LEFT_ADAPTER_LENGTH = 17
 FULL_SEQUENCE_LENGTH = 110
 VARIABLE_REGION_LENGTH = FULL_SEQUENCE_LENGTH - LEFT_ADAPTER_LENGTH
@@ -95,7 +96,7 @@ class DreamLegNet(TorchSequenceModel):
         checkpoint: str | Path | None = None,
         weights_dir: str | Path | None = None,
         **kwargs,
-    ) -> "DreamLegNet":
+    ) -> DreamLegNet:
         path = Path(checkpoint) if checkpoint else weight_path(
             "checkpoints/dream_legnet.pt", weights_dir
         )

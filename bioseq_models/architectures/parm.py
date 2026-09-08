@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import torch
-import torch.nn.functional as functional
 from einops.layers.torch import Rearrange
 from torch import nn
+from torch.nn import functional
 
 
 class PARMGELU(nn.Module):

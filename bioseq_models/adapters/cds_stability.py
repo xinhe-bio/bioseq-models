@@ -16,7 +16,6 @@ from ..architectures.cds_stability import (
 from ..inference import _prediction_matrix, normalize_sequences
 from ..resources import weight_path
 
-
 SPECIES = {"human": 1, "mouse": 2, "zebrafish": 3, "fruitfly": 4, "yeast": 5}
 CODONBERT_BASES = 3066
 _BERT_VOCAB = {
@@ -61,9 +60,9 @@ class CDSStability:
         codonbert_model_dir: str | Path | None = None,
         weights_dir: str | Path | None = None,
         **kwargs,
-    ) -> "CDSStability":
+    ) -> CDSStability:
         try:
-            from transformers import BertForPreTraining
+            from transformers import BertConfig, BertForPreTraining
         except ImportError as exc:
             raise ImportError(
                 "CDS stability requires transformers; reinstall bioseq-models"
@@ -78,8 +77,17 @@ class CDSStability:
         model = CDSStabilityNetwork()
         state = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
         model.load_state_dict(state, strict=True)
+        # Pass the local config explicitly. Some supported Transformers releases
+        # otherwise instantiate BERT with its default 30,522-token vocabulary
+        # before loading this checkpoint's 69-token codon vocabulary.
+        codonbert_config = BertConfig.from_pretrained(
+            bert_path,
+            local_files_only=True,
+        )
         codonbert = BertForPreTraining.from_pretrained(
-            bert_path, local_files_only=True
+            bert_path,
+            config=codonbert_config,
+            local_files_only=True,
         )
         return cls(model, codonbert, species=species, **kwargs)
 

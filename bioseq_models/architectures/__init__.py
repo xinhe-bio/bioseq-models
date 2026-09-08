@@ -1,8 +1,8 @@
 """Neural architectures required by the bundled checkpoints."""
 
 from .agarwal import MPRALegNet
-from .cetnar import CetnarStabilityCNNBiLSTM
 from .cds_stability import CDSStabilityNetwork
+from .cetnar import CetnarStabilityCNNBiLSTM
 from .deepstarr import DeepSTARRPaper
 from .deepstarr_tissue import (
     DeepSTARREmbryoNetwork,
@@ -16,14 +16,14 @@ from .parm import PARMExactCNN
 from .utr_code import UTRCodeNetwork
 
 __all__ = [
-    "MPRALegNet",
-    "CetnarStabilityCNNBiLSTM",
     "CDSStabilityNetwork",
-    "DeepSTARRPaper",
+    "CetnarStabilityCNNBiLSTM",
     "DeepSTARREmbryoNetwork",
     "DeepSTARRMouseNetwork",
+    "DeepSTARRPaper",
     "DeepSTARRTissueNetwork",
     "LegNetAutosome",
+    "MPRALegNet",
     "MalinoisNetwork",
     "Optimus5Prime",
     "PARMExactCNN",

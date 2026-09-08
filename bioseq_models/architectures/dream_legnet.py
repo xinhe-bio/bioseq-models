@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from itertools import pairwise
 
 import torch
 import torch.nn.functional as F
@@ -132,7 +133,7 @@ class LegNetAutosome(nn.Module):
                 _EfficientResidualBlock(
                     previous, current, kernel_size, resize_factor, se_reduction
                 )
-                for previous, current in zip(block_sizes[:-1], block_sizes[1:])
+                for previous, current in pairwise(block_sizes)
             ]
         )
         self.mapper = nn.Sequential(
