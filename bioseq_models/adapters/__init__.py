@@ -3,6 +3,7 @@
 from .agarwal import AgarwalHepG2, AgarwalK562, AgarwalWTC11
 from .cds_stability import CDSStability
 from .cetnar import CetnarStability
+from .deepadapt import DeepAdaptHeatShock
 from .deepstarr import DeepSTARR
 from .deepstarr_tissue import (
     DeepSTARREmbryoBrainAccessibility,
@@ -42,6 +43,7 @@ __all__ = [
     "AgarwalWTC11",
     "CDSStability",
     "CetnarStability",
+    "DeepAdaptHeatShock",
     "DeepSTARR",
     "DeepSTARREmbryoBrainAccessibility",
     "DeepSTARREmbryoBrainSpecificActivity",

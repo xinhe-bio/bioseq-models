@@ -11,7 +11,7 @@ pip install "git+https://github.com/UTR-CODE/bioseq-models.git"
 
 Model weights are downloaded on first use from
 [`xinHesysu/bioseq-models`](https://huggingface.co/xinHesysu/bioseq-models)
-at revision `v0.9.0` and cached locally.
+at revision `v0.10.0` and cached locally.
 
 ## Quick start
 
@@ -45,6 +45,7 @@ download_model("optimus5prime")
 |---|---|
 | `optimus5prime` ([paper](https://doi.org/10.1038/s41587-019-0164-5)) | 50-nt 5′UTR → mean ribosome load |
 | `utr_code` | 5′UTR, CDS, or 3′UTR → context-dependent translation score |
+| `deepadapt_heatshock` | 5′UTR, CDS, or 3′UTR → WI-38 senescent heat-shock delta and condition-specific log2 TE |
 | `cds_stability` | complete CDS → stability score |
 | `deepstarr` ([paper](https://doi.org/10.1038/s41588-022-01048-5)) | 249-nt enhancer → developmental and housekeeping activity |
 | `malinois` ([paper](https://doi.org/10.1038/s41586-024-08070-z)) | 200-nt enhancer → K562, HepG2, and SK-N-SH activity |
@@ -153,6 +154,42 @@ scores = model.score(candidates)
 1,000, 4,500, and 4,000 nt, respectively. `rna_count` is
 `log1p(RNA_RPKM × 5)`. A custom cellular context can be supplied as a
 13,238-value raw expression vector with `transcriptome_profile=`.
+
+### DeepAdapt heat shock
+
+DeepAdapt predicts translation efficiency in normal and heat-shocked senescent
+WI-38 cells. Select one transcript region to score and supply the fixed sequence
+for the other two regions.
+
+```python
+from bioseq_models import load_model
+
+model = load_model(
+    "deepadapt_heatshock",
+    design_region="utr5",
+    cds="ATG" + "GCT" * 30 + "TAA",
+    utr3="ACGT" * 20,
+    device="cpu",
+)
+
+candidates = [
+    "GCGTGCGTGCGTGCGTGCGTGCGTGCGTGCGT",
+    "AACCAACCAACCAACCAACCAACCAACCAACC",
+]
+scores = model.score(candidates)
+
+# Columns: delta_log2_te, normal_log2_te, heatshock_log2_te
+print(scores)
+```
+
+`delta_log2_te` is `heatshock_log2_te - normal_log2_te`; positive values predict
+increased translation efficiency after heat shock. The bundled environment uses
+two normal and two heat-shock RNA-seq profiles from condition
+`WI38_Senescent_HeatShock_GSE124609`.
+
+`design_region` can be `utr5`, `cds`, or `utr3`, with maximum lengths of 1,000,
+4,500, and 4,000 nt. CDS inputs must start with `ATG`, end with `TAA`, `TAG`, or
+`TGA`, and contain complete codons. Longer sequences raise `ValueError`.
 
 ### CDS stability
 

@@ -3,7 +3,7 @@
 The checkpoints were selected from the BioSeqBench reproductions and UTR-CODE
 projects. They are distributed as individually downloadable files in the
 versioned Hugging Face model repository.
-The Python package pins version 0.9.0 to the immutable `v0.9.0` repository tag.
+The Python package pins version 0.10.0 to the immutable `v0.10.0` repository tag.
 
 | Model | Bundled checkpoint | Notes |
 |---|---|---|
@@ -27,6 +27,7 @@ The Python package pins version 0.9.0 to the immutable `v0.9.0` repository tag.
 | `dream_legnet` | one validation-selected checkpoint | Reproduced Autosome/LegNet model with the published 150-position preprocessing and forward/reverse-complement average. |
 | `cetnar_stability` | best validation CNN-BiLSTM | Sequence model trained to predict `decay_rate_k_fit`. |
 | `utr_code` | human 13,238-feature checkpoint, epoch 5 | Joint 5′UTR, CDS, 3′UTR, transcriptome-context and RNA-abundance model. Only the supervised RPF output is exposed. |
+| `deepadapt_heatshock` | boundary-overlap epoch 23 plus senescent WI-38 adapter | Three-region sequence model conditioned on normal and heat-shock RNA environments. Returns delta, normal, and treatment log2 translation efficiency. |
 | `cds_stability` | selected epoch 27 checkpoint and CodonBERT | Multi-species CDS model. The prediction is on the normalized training-target scale, not in hours. |
 | `parm_k562` | five fold checkpoints | Exact PARM CNN for K562. Predictions are averaged across the five folds. |
 | `agarwal_hepg2` | ten held-out-fold checkpoints | Four-channel MPRALegNet reproduction with reverse-complement averaging. |
@@ -36,6 +37,21 @@ The Python package pins version 0.9.0 to the immutable `v0.9.0` repository tag.
 “Published architecture” describes the reproduced architecture and training
 protocol. The bundled files are BioSeqBench-trained checkpoints unless noted
 otherwise; they are not represented as author-released weight files.
+
+## DeepAdapt heat-shock source
+
+The DeepAdapt artifact uses the Recipe C, temperature 0.35 model from the
+DeepAdapt inference package dated 2026-09-11. It combines the epoch-23 base
+sequence-and-environment network with the seven tensors from condition adapter
+`WI38_Senescent_HeatShock_GSE124609`. The adapter selected epoch 10 with held-out
+Spearman correlation 0.6800859514.
+
+The retained RNA environments are the log1p-transformed profiles for normal
+samples `SRX5202420` and `SRX5202421` and heat-shock samples `SRX5202422` and
+`SRX5202423`. The model consumes 1,000-nt 5′UTR, 4,500-nt CDS, and 4,000-nt
+3′UTR cores with 30-nt sequence overlap at both transcript-region boundaries.
+The conversion command is provided in
+`scripts/convert_deepadapt_heatshock.py`.
 
 ## Malinois source
 

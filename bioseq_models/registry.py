@@ -163,6 +163,15 @@ _MODELS = (
         status="project_checkpoint",
     ),
     ModelInfo(
+        "deepadapt_heatshock",
+        None,
+        ("delta_log2_te", "normal_log2_te", "heatshock_log2_te"),
+        "DeepAdapt WI-38 senescent heat-shock translation-efficiency model",
+        "bioseq_models.adapters.deepadapt:DeepAdaptHeatShock",
+        ("deepadapt", "heatshock"),
+        status="project_checkpoint",
+    ),
+    ModelInfo(
         "cds_stability",
         None,
         ("stability_score",),

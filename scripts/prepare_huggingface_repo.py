@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import os
 import shutil
 import sys
@@ -11,7 +13,7 @@ from pathlib import Path
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY))
-from bioseq_models.resources import MODEL_FILES
+from bioseq_models.resources import MODEL_FILES  # noqa: E402
 
 
 def arguments() -> argparse.Namespace:
@@ -51,9 +53,27 @@ def main() -> None:
         REPOSITORY / "THIRD_PARTY_NOTICES.md",
         args.output / "THIRD_PARTY_NOTICES.md",
     )
-    manifest = args.source / "weights_manifest.json"
-    if manifest.is_file():
-        shutil.copy2(manifest, args.output / manifest.name)
+    version_line = next(
+        line
+        for line in (REPOSITORY / "pyproject.toml").read_text().splitlines()
+        if line.startswith("version = ")
+    )
+    version = version_line.split("=", maxsplit=1)[1].strip().strip('"')
+    manifest = {
+        "bundle_version": version,
+        "files": {
+            filename: {
+                "bytes": (args.output / filename).stat().st_size,
+                "sha256": hashlib.sha256(
+                    (args.output / filename).read_bytes()
+                ).hexdigest(),
+            }
+            for filename in files
+        },
+    }
+    (args.output / "weights_manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n"
+    )
     print(args.output)
     print(f"Prepared {len(files)} weight files")
 

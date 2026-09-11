@@ -3,6 +3,7 @@
 from .agarwal import MPRALegNet
 from .cds_stability import CDSStabilityNetwork
 from .cetnar import CetnarStabilityCNNBiLSTM
+from .deepadapt import DeepAdaptNetwork
 from .deepstarr import DeepSTARRPaper
 from .deepstarr_tissue import (
     DeepSTARREmbryoNetwork,
@@ -18,6 +19,7 @@ from .utr_code import UTRCodeNetwork
 __all__ = [
     "CDSStabilityNetwork",
     "CetnarStabilityCNNBiLSTM",
+    "DeepAdaptNetwork",
     "DeepSTARREmbryoNetwork",
     "DeepSTARRMouseNetwork",
     "DeepSTARRPaper",

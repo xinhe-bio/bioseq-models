@@ -62,6 +62,16 @@ MODEL_CASES = [
         },
     ),
     (
+        "deepadapt_heatshock",
+        "GCGT" * 20,
+        3,
+        {
+            "design_region": "utr5",
+            "cds": "ATG" + "GCT" * 30 + "TAA",
+            "utr3": "ACGT" * 20,
+        },
+    ),
+    (
         "cds_stability",
         "ATG" + "GCT" * 18 + "TAA",
         1,
@@ -97,6 +107,7 @@ def test_registry_and_aliases():
     assert model_info("deepstarr_embryo").name == "deepstarr_embryo_brain_vnc_activity"
     assert model_info("dream_legnet").task_names == ("promoter_activity",)
     assert model_info("utrcode").name == "utr_code"
+    assert model_info("heatshock").name == "deepadapt_heatshock"
     assert model_info("mrna_stability").name == "cds_stability"
     assert set(available_models(status="paper_architecture")) == {
         "optimus5prime",
@@ -250,6 +261,27 @@ def test_utr_code_replays_retained_prediction():
     np.testing.assert_allclose(prediction[0, 0], 7.63377285, rtol=0, atol=1e-6)
 
 
+def test_deepadapt_heatshock_replays_retained_prediction():
+    model = load_model(
+        "deepadapt_heatshock",
+        device="cpu",
+        batch_size=1,
+        design_region="utr5",
+        cds="ATG" + "GCT" * 30 + "TAA",
+        utr3="ACGT" * 20,
+    )
+    prediction = model.score(["GCGT" * 20])
+    np.testing.assert_allclose(
+        prediction[0],
+        [-0.47076094, 1.86393166, 1.39317071],
+        rtol=0,
+        atol=5e-4,
+    )
+    np.testing.assert_allclose(
+        prediction[:, 0], prediction[:, 2] - prediction[:, 1], rtol=0, atol=1e-7
+    )
+
+
 def test_cds_stability_validates_complete_codon_input():
     model = load_model("cds_stability", device="cpu", species="human")
     with pytest.raises(ValueError, match="divisible by 3"):
@@ -274,7 +306,7 @@ def test_hugging_face_download_is_scoped_to_one_model(monkeypatch, tmp_path):
         "utr_code/HEK293T.txt",
     ]
     assert all(call["repo_id"] == "xinHesysu/bioseq-models" for call in calls)
-    assert all(call["revision"] == "v0.9.0" for call in calls)
+    assert all(call["revision"] == "v0.10.0" for call in calls)
 
 
 def test_deepstarr_mouse_download_fetches_one_six_checkpoint_ensemble(

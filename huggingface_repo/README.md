@@ -18,10 +18,14 @@ Pretrained weights consumed by the
 The package downloads only the files required by the model selected by the
 user.
 
-The repository contains weights for Optimus 5-Prime, DeepSTARR,
-DeepSTARR-Mouse, DeepSTARR-Embryo, Malinois, DREAM LegNet, Cetnar stability,
+The repository contains weights for Optimus 5-Prime, DeepSTARR, DeepAdapt heat
+shock, DeepSTARR-Mouse, DeepSTARR-Embryo, Malinois, DREAM LegNet, Cetnar stability,
 PARM K562, Agarwal lentiMPRA, UTR-CODE, and the multi-species CDS stability
 model with CodonBERT.
+
+`deepadapt_heatshock/model.pt` contains the WI-38 senescent heat-shock model,
+its two normal and two treatment RNA environments, and returns delta, normal,
+and treatment log2 translation efficiency through the Python package.
 
 DeepSTARR-Mouse includes separate activity and accessibility models for heart,
 limb, midbrain, forebrain, hindbrain, and neural tube. Each package resource
