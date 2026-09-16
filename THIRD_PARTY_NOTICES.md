@@ -29,6 +29,17 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+## APARENT
+
+The APARENT architecture and converted checkpoint originate from the official
+repository by Johannes Linder and collaborators:
+
+- https://github.com/johli/aparent
+- https://doi.org/10.1016/j.cell.2019.04.046
+
+Copyright (c) 2019 Johannes Linder. The upstream repository is licensed under
+the MIT License; the MIT terms reproduced above apply.
+
 ## DeepSTARR-Mouse
 
 The converted checkpoints originate from the official DeepSTARR-Mouse source

@@ -20,7 +20,7 @@ user.
 
 The repository contains weights for Optimus 5-Prime, DeepSTARR, DeepAdapt heat
 shock, DeepSTARR-Mouse, DeepSTARR-Embryo, Malinois, DREAM LegNet, Cetnar stability,
-PARM K562, Agarwal lentiMPRA, UTR-CODE, and the multi-species CDS stability
+APARENT, PARM K562, Agarwal lentiMPRA, UTR-CODE, and the multi-species CDS stability
 model with CodonBERT.
 
 `deepadapt_heatshock/model.pt` contains the WI-38 senescent heat-shock model,

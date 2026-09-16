@@ -10,7 +10,7 @@ from huggingface_hub import hf_hub_download
 from .deepstarr_embryo import checkpoint_files as _embryo_checkpoint_files
 
 HF_REPO_ID = "xinHesysu/bioseq-models"
-HF_REVISION = "v0.10.0"
+HF_REVISION = "v0.11.0"
 
 _DEEPSTARR_EMBRYO_ACCESSIBILITY_TISSUES = (
     "brain",
@@ -58,6 +58,7 @@ MODEL_FILES = {
     "malinois": ("checkpoints/malinois.pt",),
     "dream_legnet": ("checkpoints/dream_legnet.pt",),
     "cetnar_stability": ("checkpoints/cetnar_stability_cnn.pt",),
+    "aparent": ("checkpoints/aparent.pt",),
     "utr_code": ("utr_code/best.epoch", "utr_code/HEK293T.txt"),
     "deepadapt_heatshock": ("deepadapt_heatshock/model.pt",),
     "cds_stability": (

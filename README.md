@@ -11,7 +11,7 @@ pip install "git+https://github.com/UTR-CODE/bioseq-models.git"
 
 Model weights are downloaded on first use from
 [`xinHesysu/bioseq-models`](https://huggingface.co/xinHesysu/bioseq-models)
-at revision `v0.10.0` and cached locally.
+at revision `v0.11.0` and cached locally.
 
 ## Quick start
 
@@ -51,6 +51,7 @@ download_model("optimus5prime")
 | `malinois` ([paper](https://doi.org/10.1038/s41586-024-08070-z)) | 200-nt enhancer → K562, HepG2, and SK-N-SH activity |
 | `dream_legnet` ([paper](https://doi.org/10.1093/bioinformatics/btad457)) | 110-nt construct or 93-nt variable region → promoter activity |
 | `cetnar_stability` ([paper](https://doi.org/10.1038/s41467-024-54059-7)) | sequence up to 80 nt → RNA decay rate |
+| `aparent` ([paper](https://doi.org/10.1016/j.cell.2019.04.046)) | 205-nt poly(A)-site window → positional cleavage probabilities |
 | `parm_k562` ([paper](https://doi.org/10.1038/s41586-025-10093-z)) | sequence up to 586 nt → K562 RNA abundance |
 | `agarwal_hepg2`, `agarwal_k562`, `agarwal_wtc11` ([paper](https://doi.org/10.1038/s41586-024-08430-9)) | 230-nt enhancer → lentiMPRA activity |
 
@@ -123,6 +124,26 @@ scores = model.score([
 # Output order: K562_log2FC, HepG2_log2FC, SKNSH_log2FC
 print(scores)
 ```
+
+### APARENT
+
+APARENT predicts the cleavage-position distribution around a polyadenylation
+site from a 205-nt sequence window:
+
+```python
+from bioseq_models import load_model
+
+model = load_model("aparent", device="cpu")
+probabilities = model.score(["ACGT" * 51 + "A"])
+
+# Columns 0:205 are cleavage probabilities at sequence positions 0:205.
+# Column 205 is the probability of cleavage outside the sequence window.
+assert probabilities.shape == (1, 206)
+```
+
+The 206 columns form a probability distribution and sum to one. The adapter
+uses the sequence-only inference context from the released APARENT model: an
+all-zero library indicator and a positive distal-PAS indicator.
 
 ### UTR-CODE
 

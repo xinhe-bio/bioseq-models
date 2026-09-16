@@ -1,9 +1,9 @@
 # Model provenance
 
-The checkpoints were selected from the BioSeqBench reproductions and UTR-CODE
-projects. They are distributed as individually downloadable files in the
-versioned Hugging Face model repository.
-The Python package pins version 0.10.0 to the immutable `v0.10.0` repository tag.
+The checkpoints were selected from the BioSeqBench reproductions, UTR-CODE,
+and official upstream model projects. They are distributed as individually
+downloadable files in the versioned Hugging Face model repository.
+The Python package pins version 0.11.0 to the immutable `v0.11.0` repository tag.
 
 | Model | Bundled checkpoint | Notes |
 |---|---|---|
@@ -26,6 +26,7 @@ The Python package pins version 0.10.0 to the immutable `v0.10.0` repository tag
 | `malinois` | official `20211113_021200` checkpoint | Official BODA PyTorch architecture and weights. The adapter places each 200-nt sequence between the two 200-nt MPRA vector contexts used by the authors. Outputs retain the training targets' log2 fold-change scale in K562, HepG2, and SK-N-SH order. |
 | `dream_legnet` | one validation-selected checkpoint | Reproduced Autosome/LegNet model with the published 150-position preprocessing and forward/reverse-complement average. |
 | `cetnar_stability` | best validation CNN-BiLSTM | Sequence model trained to predict `decay_rate_k_fit`. |
+| `aparent` | official all-library checkpoint | APARENT sequence-only cleavage distribution. The 205 positional probabilities and distal probability reproduce the released Keras model with zeroed library context. |
 | `utr_code` | human 13,238-feature checkpoint, epoch 5 | Joint 5′UTR, CDS, 3′UTR, transcriptome-context and RNA-abundance model. Only the supervised RPF output is exposed. |
 | `deepadapt_heatshock` | boundary-overlap epoch 23 plus senescent WI-38 adapter | Three-region sequence model conditioned on normal and heat-shock RNA environments. Returns delta, normal, and treatment log2 translation efficiency. |
 | `cds_stability` | selected epoch 27 checkpoint and CodonBERT | Multi-species CDS model. The prediction is on the normalized training-target scale, not in hours. |
@@ -37,6 +38,28 @@ The Python package pins version 0.10.0 to the immutable `v0.10.0` repository tag
 “Published architecture” describes the reproduced architecture and training
 protocol. The bundled files are BioSeqBench-trained checkpoints unless noted
 otherwise; they are not represented as author-released weight files.
+
+## APARENT source
+
+- Paper: https://doi.org/10.1016/j.cell.2019.04.046
+- Source: https://github.com/johli/aparent
+- Source revision: `69ad29791709b48689ff5d9e3a3daefc568de9ce`
+- Source file: `saved_models/aparent_large_lessdropout_all_libs_no_sampleweights.h5`
+- Source SHA-256: `1bb687d390daf04b7edfe825baa4b9293fec4ed2d3fa0bd0603ba6f8df04af0e`
+
+The checkpoint is the authors' recommended base APARENT model trained on all
+MPRA libraries. Conversion maps the two channels-last Keras convolutions and
+four dense layers to PyTorch, including the unused isoform head. The public
+adapter matches Kipoi's `APARENT/site_probabilities` interface and exposes the
+206-way cleavage softmax only. `scripts/convert_aparent_checkpoint.py` checks
+the PyTorch result against an independent NumPy implementation of the Keras
+graph before writing the converted checkpoint.
+
+```bash
+python scripts/convert_aparent_checkpoint.py \
+  /path/to/aparent/saved_models/aparent_large_lessdropout_all_libs_no_sampleweights.h5 \
+  /path/to/weights/checkpoints/aparent.pt
+```
 
 ## DeepAdapt heat-shock source
 

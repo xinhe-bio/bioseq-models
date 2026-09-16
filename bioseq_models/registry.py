@@ -154,6 +154,16 @@ _MODELS = (
         status="benchmark_surrogate",
     ),
     ModelInfo(
+        "aparent",
+        205,
+        tuple(f"cleavage_probability_{position}" for position in range(205))
+        + ("distal_cleavage_probability",),
+        "APARENT 205-position alternative-polyadenylation cleavage distribution",
+        "bioseq_models.adapters.aparent:APARENT",
+        ("aparent_site_probabilities", "aparent_apa"),
+        status="converted_official_checkpoint",
+    ),
+    ModelInfo(
         "utr_code",
         None,
         ("log1p_rpf_rpkm_x5",),

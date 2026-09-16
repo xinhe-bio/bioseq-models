@@ -1,5 +1,6 @@
 """Neural architectures required by the bundled checkpoints."""
 
+from .aparent import APARENTNetwork
 from .agarwal import MPRALegNet
 from .cds_stability import CDSStabilityNetwork
 from .cetnar import CetnarStabilityCNNBiLSTM
@@ -17,6 +18,7 @@ from .parm import PARMExactCNN
 from .utr_code import UTRCodeNetwork
 
 __all__ = [
+    "APARENTNetwork",
     "CDSStabilityNetwork",
     "CetnarStabilityCNNBiLSTM",
     "DeepAdaptNetwork",

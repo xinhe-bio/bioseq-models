@@ -51,6 +51,7 @@ MODEL_CASES = [
     ("malinois", "A" * 200, 3, {}),
     ("dream_legnet", "A" * 110, 1, {}),
     ("cetnar_stability", "A" * 60, 1, {}),
+    ("aparent", "A" * 205, 206, {}),
     (
         "utr_code",
         "ACGT" * 25,
@@ -106,6 +107,7 @@ def test_registry_and_aliases():
     )
     assert model_info("deepstarr_embryo").name == "deepstarr_embryo_brain_vnc_activity"
     assert model_info("dream_legnet").task_names == ("promoter_activity",)
+    assert model_info("aparent_apa").name == "aparent"
     assert model_info("utrcode").name == "utr_code"
     assert model_info("heatshock").name == "deepadapt_heatshock"
     assert model_info("mrna_stability").name == "cds_stability"
@@ -140,6 +142,7 @@ def test_registry_and_aliases():
             f"deepstarr_embryo_{tissue}_activity"
             for tissue in EMBRYO_ACTIVITY_TISSUES
         ),
+        "aparent",
     }
     assert set(available_models(status="converted_official_checkpoint")) == (
         expected_converted
@@ -177,6 +180,18 @@ def test_cetnar_checkpoint_replays_retained_prediction():
     sequence = "AAAAAAAAAAAAAAAAAAAACCCGCCAUAUGGCGGGAGGCGGACCGAGGGAGCAGCACGACGGGAC"
     prediction = load_model("cetnar_stability", device="cpu").score([sequence])
     np.testing.assert_allclose(prediction[0, 0], 0.88651246, rtol=0, atol=2e-4)
+
+
+def test_aparent_checkpoint_replays_retained_prediction():
+    prediction = load_model("aparent", device="cpu").score(["ACGT" * 51 + "A"])
+    assert prediction.shape == (1, 206)
+    np.testing.assert_allclose(prediction.sum(axis=1), 1.0, rtol=0, atol=1e-6)
+    np.testing.assert_allclose(
+        prediction[0, [0, 80, 104, 204, 205]],
+        [9.2440923e-06, 2.3834906e-05, 1.6754875e-05, 1.4554639e-05, 0.9956096],
+        rtol=0,
+        atol=2e-6,
+    )
 
 
 def test_malinois_official_checkpoint_replays_retained_prediction():
@@ -306,7 +321,22 @@ def test_hugging_face_download_is_scoped_to_one_model(monkeypatch, tmp_path):
         "utr_code/HEK293T.txt",
     ]
     assert all(call["repo_id"] == "xinHesysu/bioseq-models" for call in calls)
-    assert all(call["revision"] == "v0.10.0" for call in calls)
+    assert all(call["revision"] == "v0.11.0" for call in calls)
+
+
+def test_aparent_download_fetches_only_converted_checkpoint(monkeypatch, tmp_path):
+    calls = []
+
+    def fake_download(**kwargs):
+        calls.append(kwargs)
+        return tmp_path / kwargs["filename"]
+
+    monkeypatch.setattr(resources, "hf_hub_download", fake_download)
+    downloaded = download_model("aparent", cache_dir=tmp_path)
+
+    assert len(downloaded) == 1
+    assert calls[0]["filename"] == "checkpoints/aparent.pt"
+    assert calls[0]["revision"] == "v0.11.0"
 
 
 def test_deepstarr_mouse_download_fetches_one_six_checkpoint_ensemble(
