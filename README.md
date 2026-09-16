@@ -11,7 +11,7 @@ pip install "git+https://github.com/UTR-CODE/bioseq-models.git"
 
 Model weights are downloaded on first use from
 [`xinHesysu/bioseq-models`](https://huggingface.co/xinHesysu/bioseq-models)
-at revision `v0.11.0` and cached locally.
+at revision `v0.11.1` and cached locally.
 
 ## Quick start
 

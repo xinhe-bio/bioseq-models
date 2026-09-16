@@ -10,7 +10,7 @@ from huggingface_hub import hf_hub_download
 from .deepstarr_embryo import checkpoint_files as _embryo_checkpoint_files
 
 HF_REPO_ID = "xinHesysu/bioseq-models"
-HF_REVISION = "v0.11.0"
+HF_REVISION = "v0.11.1"
 
 _DEEPSTARR_EMBRYO_ACCESSIBILITY_TISSUES = (
     "brain",

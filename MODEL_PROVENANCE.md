@@ -3,7 +3,7 @@
 The checkpoints were selected from the BioSeqBench reproductions, UTR-CODE,
 and official upstream model projects. They are distributed as individually
 downloadable files in the versioned Hugging Face model repository.
-The Python package pins version 0.11.0 to the immutable `v0.11.0` repository tag.
+The Python package pins version 0.11.1 to the immutable `v0.11.1` repository tag.
 
 | Model | Bundled checkpoint | Notes |
 |---|---|---|

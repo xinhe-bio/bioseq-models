@@ -369,7 +369,7 @@ def test_hugging_face_download_is_scoped_to_one_model(monkeypatch, tmp_path):
         "utr_code/HEK293T.txt",
     ]
     assert all(call["repo_id"] == "xinHesysu/bioseq-models" for call in calls)
-    assert all(call["revision"] == "v0.11.0" for call in calls)
+    assert all(call["revision"] == "v0.11.1" for call in calls)
 
 
 def test_aparent_download_fetches_only_converted_checkpoint(monkeypatch, tmp_path):
@@ -384,7 +384,7 @@ def test_aparent_download_fetches_only_converted_checkpoint(monkeypatch, tmp_pat
 
     assert len(downloaded) == 1
     assert calls[0]["filename"] == "checkpoints/aparent.pt"
-    assert calls[0]["revision"] == "v0.11.0"
+    assert calls[0]["revision"] == "v0.11.1"
 
 
 def test_deepstarr_mouse_download_fetches_one_six_checkpoint_ensemble(

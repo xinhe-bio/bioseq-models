@@ -23,6 +23,10 @@ shock, DeepSTARR-Mouse, DeepSTARR-Embryo, Malinois, DREAM LegNet, Cetnar stabili
 APARENT, PARM K562, Agarwal lentiMPRA, UTR-CODE, and the multi-species CDS stability
 model with CodonBERT.
 
+Release `v0.11.1` pairs these unchanged model artifacts with package-side strict
+resource validation: CDS stability now explicitly fetches both the CodonBERT
+configuration and checkpoint and rejects missing or empty files.
+
 `deepadapt_heatshock/model.pt` contains the WI-38 senescent heat-shock model,
 its two normal and two treatment RNA environments, and returns delta, normal,
 and treatment log2 translation efficiency through the Python package.
