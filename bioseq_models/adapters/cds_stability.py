@@ -24,6 +24,16 @@ _BERT_VOCAB = {
 }
 
 
+def _require_nonempty_file(path: str | Path, description: str) -> Path:
+    """Return *path* only when it resolves to a non-empty regular file."""
+    resolved = Path(path)
+    if not resolved.is_file():
+        raise FileNotFoundError(f"{description} not found: {resolved}")
+    if resolved.stat().st_size == 0:
+        raise ValueError(f"{description} is empty: {resolved}")
+    return resolved
+
+
 class CDSStability:
     """Predict a normalized stability score from complete CDS candidates."""
 
@@ -68,22 +78,44 @@ class CDSStability:
                 "CDS stability requires transformers; reinstall bioseq-models"
             ) from exc
 
-        checkpoint_path = Path(checkpoint) if checkpoint else weight_path(
-            "cds_stability/best_model.pt", weights_dir
+        checkpoint_path = _require_nonempty_file(
+            Path(checkpoint)
+            if checkpoint
+            else weight_path("cds_stability/best_model.pt", weights_dir),
+            "CDS stability checkpoint",
         )
-        bert_path = Path(codonbert_model_dir) if codonbert_model_dir else weight_path(
-            "cds_stability/codonbert/pytorch_model.bin", weights_dir
-        ).parent
+        if codonbert_model_dir:
+            bert_path = Path(codonbert_model_dir)
+            bert_config_path = bert_path / "config.json"
+            bert_weights_path = bert_path / "pytorch_model.bin"
+        else:
+            # Resolve both files explicitly. MODEL_FILES is used by
+            # download_model(), but load_model() delegates resource resolution
+            # to each adapter and does not pre-download sibling files.
+            bert_config_path = weight_path(
+                "cds_stability/codonbert/config.json", weights_dir
+            )
+            bert_weights_path = weight_path(
+                "cds_stability/codonbert/pytorch_model.bin", weights_dir
+            )
+            bert_path = bert_weights_path.parent
+        bert_config_path = _require_nonempty_file(
+            bert_config_path, "CodonBERT config"
+        )
+        bert_weights_path = _require_nonempty_file(
+            bert_weights_path, "CodonBERT checkpoint"
+        )
+        if bert_config_path.parent != bert_weights_path.parent:
+            raise ValueError(
+                "CodonBERT config and checkpoint must be in the same directory: "
+                f"{bert_config_path.parent} != {bert_weights_path.parent}"
+            )
         model = CDSStabilityNetwork()
         state = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
         model.load_state_dict(state, strict=True)
-        # Pass the local config explicitly. Some supported Transformers releases
-        # otherwise instantiate BERT with its default 30,522-token vocabulary
-        # before loading this checkpoint's 69-token codon vocabulary.
-        codonbert_config = BertConfig.from_pretrained(
-            bert_path,
-            local_files_only=True,
-        )
+        # Parse the verified file directly so a missing config can never fall
+        # back to BERT's default 30,522-token, 512-position configuration.
+        codonbert_config = BertConfig.from_json_file(str(bert_config_path))
         codonbert = BertForPreTraining.from_pretrained(
             bert_path,
             config=codonbert_config,

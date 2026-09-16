@@ -305,6 +305,54 @@ def test_cds_stability_validates_complete_codon_input():
         model.score(["ATGNNNTAA"])
 
 
+def test_cds_stability_requires_real_codonbert_files(tmp_path):
+    empty_checkpoint = tmp_path / "empty_model.pt"
+    empty_checkpoint.write_bytes(b"")
+    with pytest.raises(ValueError, match="CDS stability checkpoint is empty"):
+        load_model(
+            "cds_stability",
+            device="cpu",
+            species="human",
+            checkpoint=empty_checkpoint,
+            codonbert_model_dir=tmp_path,
+        )
+
+    with pytest.raises(FileNotFoundError, match="CodonBERT config not found"):
+        load_model(
+            "cds_stability",
+            device="cpu",
+            species="human",
+            codonbert_model_dir=tmp_path,
+        )
+
+    (tmp_path / "config.json").write_bytes(b"")
+    with pytest.raises(ValueError, match="CodonBERT config is empty"):
+        load_model(
+            "cds_stability",
+            device="cpu",
+            species="human",
+            codonbert_model_dir=tmp_path,
+        )
+
+    (tmp_path / "config.json").write_text("{}")
+    with pytest.raises(FileNotFoundError, match="CodonBERT checkpoint not found"):
+        load_model(
+            "cds_stability",
+            device="cpu",
+            species="human",
+            codonbert_model_dir=tmp_path,
+        )
+
+    (tmp_path / "pytorch_model.bin").write_bytes(b"")
+    with pytest.raises(ValueError, match="CodonBERT checkpoint is empty"):
+        load_model(
+            "cds_stability",
+            device="cpu",
+            species="human",
+            codonbert_model_dir=tmp_path,
+        )
+
+
 def test_hugging_face_download_is_scoped_to_one_model(monkeypatch, tmp_path):
     calls = []
 
