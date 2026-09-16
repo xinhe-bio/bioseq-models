@@ -10,7 +10,7 @@ from torch import nn
 from ..architectures import MPRALegNet
 from ..inference import TorchSequenceModel
 from ..resources import weight_path
-from .common import encode_acgt_sequences, task_matrix
+from .common import encode_acgt_sequences, prepare_acgt_probabilities, task_matrix
 
 
 def _checkpoint_paths(cell_type: str, weights_dir=None) -> tuple[Path, ...]:
@@ -29,8 +29,18 @@ class _MPRATTAEnsemble(nn.Module):
         reverse = inputs[:, [3, 2, 1, 0], :].flip(dims=[2])
         predictions = []
         for model in self.models:
-            forward_value = task_matrix(model(inputs))
-            reverse_value = task_matrix(model(reverse))
+            if torch.is_grad_enabled() and inputs.requires_grad:
+                from torch.utils.checkpoint import checkpoint
+
+                forward_value = task_matrix(
+                    checkpoint(model, inputs, use_reentrant=False)
+                )
+                reverse_value = task_matrix(
+                    checkpoint(model, reverse, use_reentrant=False)
+                )
+            else:
+                forward_value = task_matrix(model(inputs))
+                reverse_value = task_matrix(model(reverse))
             predictions.append((forward_value + reverse_value) / 2)
         stacked = torch.stack(predictions)
         return stacked.mean(dim=0)
@@ -48,6 +58,11 @@ class AgarwalMPRALegNet(TorchSequenceModel):
             lambda values: encode_acgt_sequences(values, exact_length=230)[
                 :, [0, 2, 1, 3], :
             ],
+            soft_encoder=lambda values: prepare_acgt_probabilities(
+                values,
+                exact_length=230,
+                channel_order="AGCT",
+            ),
             **kwargs,
         )
         self.cell_type = type(self).cell_type

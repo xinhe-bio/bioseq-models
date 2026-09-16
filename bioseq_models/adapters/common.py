@@ -60,6 +60,31 @@ def encode_acgt_last_channel(
     ).transpose(1, 2)
 
 
+def prepare_acgt_probabilities(
+    probabilities,
+    *,
+    exact_length: int,
+    channel_order: str = "ACGT",
+):
+    """Convert canonical ``[batch, length, A/C/G/T]`` soft input for a CNN."""
+    import torch
+
+    if not isinstance(probabilities, torch.Tensor):
+        raise TypeError("probabilities must be a PyTorch tensor")
+    if probabilities.ndim != 3 or probabilities.shape[2] != 4:
+        raise ValueError(
+            "probabilities must have shape [batch, length, 4] in A/C/G/T order"
+        )
+    if probabilities.shape[1] != exact_length:
+        raise ValueError(
+            f"model requires {exact_length}-nt soft inputs; received {probabilities.shape[1]}"
+        )
+    if len(channel_order) != 4 or set(channel_order) != set("ACGT"):
+        raise ValueError("channel_order must be a permutation of ACGT")
+    indices = ["ACGT".index(base) for base in channel_order]
+    return probabilities[:, :, indices].transpose(1, 2)
+
+
 class RestoredTargetScale(nn.Module):
     """Restore standardized model predictions to their measured target scale."""
 

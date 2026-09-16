@@ -10,7 +10,11 @@ from torch import nn
 from ..architectures import Optimus5Prime as Optimus5PrimeNetwork
 from ..inference import TorchSequenceModel
 from ..resources import weight_path
-from .common import RestoredTargetScale, encode_acgt_sequences
+from .common import (
+    RestoredTargetScale,
+    encode_acgt_sequences,
+    prepare_acgt_probabilities,
+)
 
 
 class Optimus5Prime(TorchSequenceModel):
@@ -21,6 +25,9 @@ class Optimus5Prime(TorchSequenceModel):
         super().__init__(
             model or Optimus5PrimeNetwork(),
             lambda values: encode_acgt_sequences(values, exact_length=50),
+            soft_encoder=lambda values: prepare_acgt_probabilities(
+                values, exact_length=50
+            ),
             **kwargs,
         )
 

@@ -9,7 +9,7 @@ import torch
 from ..architectures import DeepSTARRPaper
 from ..inference import TorchSequenceModel
 from ..resources import weight_path
-from .common import encode_acgt_sequences
+from .common import encode_acgt_sequences, prepare_acgt_probabilities
 
 
 class DeepSTARR(TorchSequenceModel):
@@ -18,6 +18,9 @@ class DeepSTARR(TorchSequenceModel):
         super().__init__(
             model or DeepSTARRPaper(),
             lambda values: encode_acgt_sequences(values, exact_length=249),
+            soft_encoder=lambda values: prepare_acgt_probabilities(
+                values, exact_length=249
+            ),
             **kwargs,
         )
 

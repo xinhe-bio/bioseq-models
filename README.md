@@ -29,6 +29,12 @@ scores = model.score(sequences)
 print(scores)
 ```
 
+`optimus5prime`, `deepstarr`, and the three Agarwal lentiMPRA models also expose
+`score_soft(probabilities)` for differentiable sequence design. `probabilities`
+has shape `[batch, length, 4]` in A/C/G/T order. Each adapter applies its model's
+required layout and channel order; Agarwal converts the canonical input to
+A/G/C/T internally.
+
 Use `download_model()` to cache a model before inference:
 
 ```python

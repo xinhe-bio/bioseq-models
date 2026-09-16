@@ -104,6 +104,7 @@ class TorchSequenceModel(SequenceModel):
         model,
         encoder: Callable[[np.ndarray], Any],
         *,
+        soft_encoder: Callable[[Any], Any] | None = None,
         device: Any = "cpu",
         batch_size: int = 4096,
         **kwargs,
@@ -113,12 +114,20 @@ class TorchSequenceModel(SequenceModel):
             raise ValueError("batch_size must be positive")
         self.model = model
         self.encoder = encoder
+        self.soft_encoder = soft_encoder
         self.device = device
         self.batch_size = int(batch_size)
         if device is not None and hasattr(model, "to"):
             model.to(device)
         if hasattr(model, "eval"):
             model.eval()
+        if hasattr(model, "parameters"):
+            for parameter in model.parameters():
+                parameter.requires_grad_(False)
+
+    @property
+    def supports_soft_scoring(self) -> bool:
+        return self.soft_encoder is not None
 
     def score(self, sequences) -> np.ndarray:
         import torch
@@ -146,3 +155,34 @@ class TorchSequenceModel(SequenceModel):
                     )
                 )
         return np.concatenate(predictions, axis=0)
+
+    def score_soft(self, probabilities):
+        """Score canonical ``[batch, length, A/C/G/T]`` probabilities."""
+        import torch
+
+        if self.soft_encoder is None:
+            raise TypeError(f"{type(self).__name__} does not implement soft sequence encoding")
+        if not isinstance(probabilities, torch.Tensor):
+            raise TypeError("soft sequence input must be a PyTorch tensor")
+        if probabilities.ndim != 3 or probabilities.shape[2] != 4:
+            raise ValueError(
+                "soft sequence input must have shape [batch, length, 4] in A/C/G/T order"
+            )
+        inputs = self.soft_encoder(probabilities)
+        if self.device is not None and hasattr(inputs, "to"):
+            inputs = inputs.to(self.device)
+        output = self.model(inputs)
+        if isinstance(output, tuple):
+            output = output[0]
+        if not isinstance(output, torch.Tensor):
+            raise TypeError("model soft output must be a PyTorch tensor")
+        if output.ndim == 1:
+            output = output[:, None]
+        expected = (len(probabilities), len(self.task_names))
+        if output.ndim != 2 or tuple(output.shape) != expected:
+            raise ValueError(
+                f"model returned soft shape {tuple(output.shape)}; expected {expected}"
+            )
+        if not torch.isfinite(output).all():
+            raise ValueError("model returned non-finite soft predictions")
+        return output, None
