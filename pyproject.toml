@@ -22,6 +22,7 @@ dependencies = [
 
 [project.optional-dependencies]
 conversion = ["h5py>=3", "pandas>=2", "pyarrow>=14"]
+saluki = ["h5py>=3"]
 dev = ["pytest>=7.4", "ruff>=0.8"]
 
 [project.urls]
@@ -29,6 +30,9 @@ Repository = "https://github.com/UTR-CODE/bioseq-models"
 
 [tool.setuptools.packages.find]
 include = ["bioseq_models*"]
+
+[tool.setuptools.package-data]
+bioseq_models = ["data/*.json", "data/*.txt"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

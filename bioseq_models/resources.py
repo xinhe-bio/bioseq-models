@@ -58,6 +58,8 @@ MODEL_FILES = {
     "malinois": ("checkpoints/malinois.pt",),
     "dream_legnet": ("checkpoints/dream_legnet.pt",),
     "cetnar_stability": ("checkpoints/cetnar_stability_cnn.pt",),
+    "saluki": ("saluki/saluki_human_f0_c0.pt",),
+    "saluki_mouse": ("saluki/saluki_mouse_f0_c0.pt",),
     "aparent": ("checkpoints/aparent.pt",),
     "utr_code": ("utr_code/best.epoch", "utr_code/HEK293T.txt"),
     "deepadapt_heatshock": ("deepadapt_heatshock/model.pt",),
@@ -126,10 +128,20 @@ def download_model(
     from .registry import model_info
 
     canonical = model_info(name).name
+    if canonical in {"saluki", "saluki_mouse"} and repo_id is None and revision is None:
+        from .saluki_weights import checkpoint_path
+
+        species = "human" if canonical == "saluki" else "mouse"
+        return (checkpoint_path(species, cache_dir=cache_dir),)
     files = MODEL_FILES[canonical]
     selected_repo = repo_id or os.environ.get("BIOSEQ_MODELS_HF_REPO_ID", HF_REPO_ID)
+    default_revision = HF_REVISION
+    if canonical in {"saluki", "saluki_mouse"}:
+        from .saluki_weights import SALUKI_HF_REVISION
+
+        default_revision = SALUKI_HF_REVISION
     selected_revision = revision or os.environ.get(
-        "BIOSEQ_MODELS_HF_REVISION", HF_REVISION
+        "BIOSEQ_MODELS_HF_REVISION", default_revision
     )
     selected_cache = cache_dir or os.environ.get("BIOSEQ_MODELS_CACHE")
     return tuple(

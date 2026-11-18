@@ -154,6 +154,25 @@ _MODELS = (
         status="benchmark_surrogate",
     ),
     ModelInfo(
+        "saluki",
+        None,
+        ("half_life_score",),
+        "Saluki human consensus mRNA half-life score; CDS/exon annotations required",
+        "bioseq_models.adapters.saluki:Saluki",
+        ("saluki_human", "saluki_stability"),
+        input_kind="annotated_transcript",
+        status="converted_official_checkpoint",
+    ),
+    ModelInfo(
+        "saluki_mouse",
+        None,
+        ("half_life_score",),
+        "Saluki mouse consensus mRNA half-life score; CDS/exon annotations required",
+        "bioseq_models.adapters.saluki:SalukiMouse",
+        input_kind="annotated_transcript",
+        status="converted_official_checkpoint",
+    ),
+    ModelInfo(
         "aparent",
         205,
         tuple(f"cleavage_probability_{position}" for position in range(205))

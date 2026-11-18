@@ -15,6 +15,7 @@ from .dream_legnet import LegNetAutosome
 from .malinois import MalinoisNetwork
 from .optimus5prime import Optimus5Prime
 from .parm import PARMExactCNN
+from .saluki import SalukiNetwork
 from .utr_code import UTRCodeNetwork
 
 __all__ = [
@@ -31,5 +32,6 @@ __all__ = [
     "MalinoisNetwork",
     "Optimus5Prime",
     "PARMExactCNN",
+    "SalukiNetwork",
     "UTRCodeNetwork",
 ]

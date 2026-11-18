@@ -91,3 +91,20 @@ The following notice applies to those files:
 > resulting in a commercial benefit or monetary gain. All other rights are
 > reserved. The Materials are provided 'as is", without warranty of any kind,
 > express or implied, including the warranties of noninfringement.
+
+## Saluki
+
+The Saluki architecture is adapted from `basenji/rnann.py`, Copyright 2021
+Calico LLC, licensed under Apache License 2.0. The upstream license text is
+included in `bioseq_models/data/SALUKI_LICENSE.txt`.
+
+- Architecture: https://github.com/calico/basenji/blob/master/basenji/rnann.py
+- Paper: Agarwal V, Kelley DR. The genetic and biochemical determinants of mRNA
+  degradation rates in mammals. Genome Biology 23, 245 (2022).
+  https://doi.org/10.1186/s13059-022-02811-x
+- Original model/data release: https://doi.org/10.5281/zenodo.6326409 (CC BY 4.0).
+- The default f0_c0 HDF5 files are mirrored from the pinned
+  `OneScience-Group/Saluki` Hugging Face revision
+  `ca0e13b50501c159cc501ff66129578cd030f9db`. Their sizes and CRCs match the
+  original released archive, with SHA256 values pinned in the package manifest.
+  Conversion preserves inference parameters and excludes optimizer state.

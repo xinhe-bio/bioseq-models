@@ -1,0 +1,31 @@
+{
+  "repo_id": "xinHesysu/bioseq-models",
+  "revision": "0e6bae61a6452b0dc8b356e576da88ba14f1e9db",
+  "checkpoints": {
+    "saluki/saluki_human_f0_c0.pt": {
+      "species": "human",
+      "fold": 0,
+      "cross": 0,
+      "sha256": "b0e4be9145db8625f0530adbbfff7b17f0ee0f0aa33b204a5cdbe9af41a9f4f6",
+      "source_sha256": "c254f0ab4210e397022a31838b09eb69b961afbb9e17e2cb316c9d4f82917132",
+      "size_bytes": 638977
+    },
+    "saluki/saluki_human_f0_c1.pt": {
+      "species": "human",
+      "fold": 0,
+      "cross": 1,
+      "sha256": "1ca35820d9f3ec580139b6f7d1c657065a092fd3a366f963b814f0bc4dcee198",
+      "source_sha256": "5dd7c964a559af5426fe747312c482422031a7428d0ff99552c78481af6c69b7",
+      "size_bytes": 638977
+    },
+    "saluki/saluki_mouse_f0_c0.pt": {
+      "species": "mouse",
+      "fold": 0,
+      "cross": 0,
+      "sha256": "6290824010f64d54a77126a6bcd9610328cc3d4f3593165958e6c4b9bb60368c",
+      "source_sha256": "12c1c3f035ef10894f4ce42e38b7a04e8d584d4a2a598eb392b5b863fddd0fc4",
+      "size_bytes": 638977
+    }
+  },
+  "verified_remote_sha256": true
+}

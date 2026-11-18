@@ -120,3 +120,38 @@ The validation used DeepSTARR-Mouse source revision
 provided in `scripts/convert_deepstarr_tissue_checkpoint.py`; complete batch
 conversion is provided by `scripts/prepare_deepstarr_mouse_checkpoints.py` and
 `scripts/prepare_deepstarr_embryo_checkpoints.py`.
+
+## Saluki official checkpoint conversion
+
+`saluki` (alias `saluki_human`) and `saluki_mouse` use the human and mouse
+heads of the original Saluki model. Each defaults to the official f0_c0 single
+checkpoint. Explicit `folds` and `crosses` select an arithmetic-mean ensemble;
+all ten folds and five crosses form the 50-member configuration for a species.
+
+These resources use the original release at
+https://doi.org/10.5281/zenodo.6326409, with a pinned mirror for the two default
+native files. Published PyTorch checkpoints for human f0_c0, human f0_c1 and mouse f0_c0
+are pinned by Hugging Face commit and SHA256. Other folds are converted and
+cached on demand. The package manifest lists
+all 100 human/mouse native checkpoint sizes, CRCs, archive offsets and default
+SHA256 hashes. The dataset ZIP's reported MD5 is recorded; the large archive is
+not downloaded in full or represented as having a locally verified full MD5.
+
+| Default native file | SHA256 |
+|---|---|
+| Human model0_best.h5 | c254f0ab4210e397022a31838b09eb69b961afbb9e17e2cb316c9d4f82917132 |
+| Mouse model1_best.h5 | 12c1c3f035ef10894f4ce42e38b7a04e8d584d4a2a598eb392b5b863fddd0fc4 |
+
+The six input channels preserve nucleotide sequence, first-codon-base marks
+and exon-end marks. As in the original encoder, every exon end includes the
+terminal exon. Transcripts are supplied in their RNA orientation, with no
+reverse-complement averaging. Right padding and joint 3prime cropping preserve
+annotation alignment. Output is the species-specific consensus half-life PC1
+score, with higher predicting greater stability; it is not a half-life in hours.
+
+The PyTorch network preserves valid convolutions, per-position layer
+normalization, backward GRU order, Keras-to-PyTorch gate/bias conversion, batch
+normalization and the selected output head. TensorFlow is used only for a
+manual reference comparison on original held-out transcript records; ordinary
+inference and conversion require PyTorch and h5py. Numerical verification and
+source receipts are recorded under `provenance/saluki/`.

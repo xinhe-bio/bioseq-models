@@ -12,6 +12,8 @@ pip install "git+https://github.com/UTR-CODE/bioseq-models.git"
 Model weights are downloaded on first use from
 [`xinHesysu/bioseq-models`](https://huggingface.co/xinHesysu/bioseq-models)
 at revision `v0.11.1` and cached locally.
+Saluki loads verified PyTorch weights from Hugging Face and converts additional
+original checkpoints on demand. See the [Saluki guide](docs/saluki.md).
 
 ## Quick start
 
@@ -29,7 +31,8 @@ scores = model.score(sequences)
 print(scores)
 ```
 
-`optimus5prime`, `deepstarr`, and the three Agarwal lentiMPRA models also expose
+`optimus5prime`, `deepstarr`, the three Agarwal lentiMPRA models, and Saluki with
+fixed transcript annotations also expose
 `score_soft(probabilities)` for differentiable sequence design. `probabilities`
 has shape `[batch, length, 4]` in A/C/G/T order. Each adapter applies its model's
 required layout and channel order; Agarwal converts the canonical input to
@@ -53,6 +56,7 @@ download_model("optimus5prime")
 | `utr_code` | 5′UTR, CDS, or 3′UTR → context-dependent translation score |
 | `deepadapt_heatshock` | 5′UTR, CDS, or 3′UTR → WI-38 senescent heat-shock delta and condition-specific log2 TE |
 | `cds_stability` | complete CDS → stability score |
+| `saluki`, `saluki_mouse` ([paper](https://doi.org/10.1186/s13059-022-02811-x)) | full mRNA + CDS/exon annotations → consensus half-life score |
 | `deepstarr` ([paper](https://doi.org/10.1038/s41588-022-01048-5)) | 249-nt enhancer → developmental and housekeeping activity |
 | `malinois` ([paper](https://doi.org/10.1038/s41586-024-08070-z)) | 200-nt enhancer → K562, HepG2, and SK-N-SH activity |
 | `dream_legnet` ([paper](https://doi.org/10.1093/bioinformatics/btad457)) | 110-nt construct or 93-nt variable region → promoter activity |
