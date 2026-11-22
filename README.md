@@ -6,7 +6,7 @@ checkpoints and scoring DNA or RNA sequences.
 ## Installation
 
 ```bash
-pip install "git+https://github.com/UTR-CODE/bioseq-models.git"
+pip install "git+https://github.com/xinhe-bio/bioseq-models.git"
 ```
 
 Model weights are downloaded on first use from
@@ -31,11 +31,11 @@ scores = model.score(sequences)
 print(scores)
 ```
 
-`optimus5prime`, `deepstarr`, the three Agarwal lentiMPRA models, and Saluki with
+`optimus5prime`, `deepstarr`, the three MPRALegNet models, and Saluki with
 fixed transcript annotations also expose
 `score_soft(probabilities)` for differentiable sequence design. `probabilities`
 has shape `[batch, length, 4]` in A/C/G/T order. Each adapter applies its model's
-required layout and channel order; Agarwal converts the canonical input to
+required layout and channel order; MPRALegNet converts the canonical input to
 A/G/C/T internally.
 
 Use `download_model()` to cache a model before inference:
@@ -53,9 +53,6 @@ download_model("optimus5prime")
 | Model | Input → output |
 |---|---|
 | `optimus5prime` ([paper](https://doi.org/10.1038/s41587-019-0164-5)) | 50-nt 5′UTR → mean ribosome load |
-| `utr_code` | 5′UTR, CDS, or 3′UTR → context-dependent translation score |
-| `deepadapt_heatshock` | 5′UTR, CDS, or 3′UTR → WI-38 senescent heat-shock delta and condition-specific log2 TE |
-| `cds_stability` | complete CDS → stability score |
 | `saluki`, `saluki_mouse` ([paper](https://doi.org/10.1186/s13059-022-02811-x)) | full mRNA + CDS/exon annotations → consensus half-life score |
 | `deepstarr` ([paper](https://doi.org/10.1038/s41588-022-01048-5)) | 249-nt enhancer → developmental and housekeeping activity |
 | `malinois` ([paper](https://doi.org/10.1038/s41586-024-08070-z)) | 200-nt enhancer → K562, HepG2, and SK-N-SH activity |
@@ -63,7 +60,7 @@ download_model("optimus5prime")
 | `cetnar_stability` ([paper](https://doi.org/10.1038/s41467-024-54059-7)) | sequence up to 80 nt → RNA decay rate |
 | `aparent` ([paper](https://doi.org/10.1016/j.cell.2019.04.046)) | 205-nt poly(A)-site window → positional cleavage probabilities |
 | `parm_k562` ([paper](https://doi.org/10.1038/s41586-025-10093-z)) | sequence up to 586 nt → K562 RNA abundance |
-| `agarwal_hepg2`, `agarwal_k562`, `agarwal_wtc11` ([paper](https://doi.org/10.1038/s41586-024-08430-9)) | 230-nt enhancer → lentiMPRA activity |
+| `mpralegnet_hepg2`, `mpralegnet_k562`, `mpralegnet_wtc11` ([paper](https://doi.org/10.1038/s41586-024-08430-9)) | 230-nt enhancer → lentiMPRA activity |
 
 ### DeepSTARR-Mouse
 
@@ -155,96 +152,21 @@ The 206 columns form a probability distribution and sum to one. The adapter
 uses the sequence-only inference context from the released APARENT model: an
 all-zero library indicator and a positive distal-PAS indicator.
 
-### UTR-CODE
+### MPRALegNet
 
-UTR-CODE predicts `log1p(RPF_RPKM × 5)` in a fixed transcript and cellular
-context. Select one region to score and supply the other two regions when
-loading the model.
-
-```python
-from bioseq_models import load_model
-
-model = load_model(
-    "utr_code",
-    design_region="utr3",
-    utr5="GGGAGACCGGCGCGGCGGCGGCGGAGGCGGAGGCGG",
-    cds="ATGGCCGCCGCCGACCTGAACTTCGAGGAGTAA",
-    cell_context="HEK293T",
-    rna_count=6.3,
-    device="cpu",
-)
-
-candidates = [
-    "GCTGCTGCTGCTGCTGCTGCTGCTGCTGCT",
-    "ACACACACACACACACACACACACACACACA",
-]
-scores = model.score(candidates)
-```
-
-`design_region` can be `utr5`, `cds`, or `utr3`, with maximum lengths of
-1,000, 4,500, and 4,000 nt, respectively. `rna_count` is
-`log1p(RNA_RPKM × 5)`. A custom cellular context can be supplied as a
-13,238-value raw expression vector with `transcriptome_profile=`.
-
-### DeepAdapt heat shock
-
-DeepAdapt predicts translation efficiency in normal and heat-shocked senescent
-WI-38 cells. Select one transcript region to score and supply the fixed sequence
-for the other two regions.
+MPRALegNet predicts lentiMPRA activity from 230-nt sequences. Each cell-type
+model averages ten cross-validation checkpoints and returns one log₂ RNA/DNA
+activity score per sequence.
 
 ```python
 from bioseq_models import load_model
 
-model = load_model(
-    "deepadapt_heatshock",
-    design_region="utr5",
-    cds="ATG" + "GCT" * 30 + "TAA",
-    utr3="ACGT" * 20,
-    device="cpu",
-)
-
-candidates = [
-    "GCGTGCGTGCGTGCGTGCGTGCGTGCGTGCGT",
-    "AACCAACCAACCAACCAACCAACCAACCAACC",
-]
-scores = model.score(candidates)
-
-# Columns: delta_log2_te, normal_log2_te, heatshock_log2_te
-print(scores)
+sequences = ["ACGT" * 57 + "AC"]
+scores = {
+    cell: load_model(f"mpralegnet_{cell.lower()}", device="cpu").score(sequences)
+    for cell in ("K562", "HepG2", "WTC11")
+}
 ```
-
-`delta_log2_te` is `heatshock_log2_te - normal_log2_te`; positive values predict
-increased translation efficiency after heat shock. The bundled environment uses
-two normal and two heat-shock RNA-seq profiles from condition
-`WI38_Senescent_HeatShock_GSE124609`.
-
-`design_region` can be `utr5`, `cds`, or `utr3`, with maximum lengths of 1,000,
-4,500, and 4,000 nt. CDS inputs must start with `ATG`, end with `TAA`, `TAG`, or
-`TGA`, and contain complete codons. Longer sequences raise `ValueError`.
-
-### CDS stability
-
-The CDS stability model combines a sequence CNN with CodonBERT.
-
-```python
-from bioseq_models import load_model
-
-model = load_model(
-    "cds_stability",
-    species="human",
-    device="cpu",
-)
-
-cds_candidates = [
-    "ATGGCCGCCGCCGACCTGAACTTCGAGGAGTAA",
-    "ATGGCGGCGGCGGATCTCAACTTTGAAGAGTAA",
-]
-scores = model.score(cds_candidates)
-```
-
-Supported species are `human`, `mouse`, `zebrafish`, `fruitfly`, and `yeast`.
-A CDS must contain complete codons and cannot exceed 9,000 nt. The model returns
-a normalized stability score rather than a half-life in hours.
 
 ## Model discovery
 
@@ -288,7 +210,7 @@ are listed in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 ## Development
 
 ```bash
-git clone https://github.com/UTR-CODE/bioseq-models.git
+git clone https://github.com/xinhe-bio/bioseq-models.git
 cd bioseq-models
 pip install -e ".[dev]"
 pytest
